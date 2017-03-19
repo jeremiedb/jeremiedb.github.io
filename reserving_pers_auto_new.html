@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Personal Auto Reserving</title>
+
+<script src="site_libs/jquery-1.12.4/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/htmlwidgets-0.8/htmlwidgets.js"></script>
+<script src="site_libs/datatables-binding-0.2/datatables.js"></script>
+<link href="site_libs/dt-core-1.10.12/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="site_libs/dt-core-1.10.12/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="site_libs/dt-core-1.10.12/js/jquery.dataTables.min.js"></script>
+<link href="site_libs/plotlyjs-1.16.3/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="site_libs/plotlyjs-1.16.3/plotly-latest.min.js"></script>
+<script src="site_libs/plotly-binding-4.5.6/plotly.js"></script>
+<!DOCTYPE html>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="site_libs/highlight/default.css"
+      type="text/css" />
+<script src="site_libs/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: -22px; }
+.code-folding-btn.collapsed { margin-bottom: 4px; }
+</style>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+  <div class="container">
+  <div class="navbar-header">
+  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+    <i class="fa fa-bars fa-lg fa-inverse"></i>
+  </button>
+  <a class="navbar-brand" href="index.html">Actuarial Analytics</a>
+  </div>
+  
+  <div id="navbar" class="collapse navbar-collapse">
+  <ul class="nav navbar-nav">
+  <li><a href="AWS_tricks.html">AWS tricks</a></li>
+  <li class="dropdown">
+      <a class="dropdown-toggle" data-toggle="dropdown">Deep Learning <b class="caret"></b></a>
+      <ul class="dropdown-menu" role="menu">
+        <li><a href="deep_learning_rationale.html">Rationale</a></li>
+        <li><a href="http://image-classifier.actuarial-analytics.ca/">Image Classifier</a></li>
+      </ul>
+  </li>
+  
+    <li class="dropdown">
+  <a class="dropdown-toggle" data-toggle="dropdown">Kaggle <b class="caret"></b></a>
+  <ul class="dropdown-menu" role="menu">
+    <li><a href="kaggle_functions.html">Utility functions</a></li>
+    <li><a href="kaggle_BNP.html">BNP</a></li>
+    <li><a href="kaggle_MNIST.html">MNIST</a></li>
+  </ul>
+  </li>
+  
+  <li class="dropdown">
+  <a class="dropdown-toggle" data-toggle="dropdown">Reserving <b class="caret"></b></a>
+  <ul class="dropdown-menu" role="menu">
+    <li><a href="reserving_comm_auto_new.html">Comm. auto</a></li>
+    <li><a href="reserving_pers_auto_new.html">Pers. auto</a></li>
+  </ul>
+  </li>
+  
+  <li><a href="http://modeling.actuarial-analytics.ca/">Modeling</a></li>
+  <li><a href="http://curve-fit.actuarial-analytics.ca/">Curve fitting</a></li>
+  
+  </ul>
+  
+  <ul class="nav navbar-nav navbar-right">
+    <li class=navbar-right><a href="mailto:nimus44@gmail.com?Subject=Actuarial%20Analytics" ><i class="fa fa-envelope fa-lg"></i></a></li>
+    <li class=navbar-right><a href="https://github.com/jeremiedb" ><i class="fa fa-github fa-lg"></i></a></li>
+  </ul>
+  
+  </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+  </nav><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Personal Auto Reserving</h1>
+
+</div>
+
+
+<blockquote>
+<p>Data prepared by Glenn G. Meyer and Peng Shi and obtained from <a href="http://www.casact.org/research/index.cfm?fa=loss_reserves_data">CAS website</a>.</p>
+</blockquote>
+<div id="data-overview" class="section level1">
+<h1>Data overview</h1>
+<p> </p>
+<div id="cumulative-paid-amount" class="section level2">
+<h2>Cumulative paid amount</h2>
+<div id="htmlwidget-3fb4785c0dcca0e407dc" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3fb4785c0dcca0e407dc">{"x":{"filter":"none","data":[[1988,1989,1990,1991,1992,1993,1994,1995,1996,1997],[3092818,3556683,4015052,4065571,4551591,5020277,5569355,5803124,5835368,5754249],[5942711,6753435,7478257,7564284,8344021,9125734,9871002,10008734,9900842,9734300],[7239089,8219551,9094949,9161104,10047179,10890282,11641397,11807279,11715869,11529307],[7930109,9018288,9945288,10006407,10901995,11782219,12600432,12797974,12726594,12577738],[8318795,9441842,10371175,10419901,11336777,12249826,13127982,13337593,13304594,13152582],[8518201,9647917,10575467,10612083,11555121,12476329,13372438,13594083,13572498,13417034],[8610355,9753014,10671988,10713621,11661643,12597247,13485776,13723956,13703080,13532455],[8655509,9800477,10728411,10764008,11713067,12654775,13539920,13789060,13769659,13594991],[8682451,9823747,10751208,10791892,11738256,12679361,13566840,13831614,13804558,13626908],[8690036,9835064,10766223,10803222,11749661,12695449,13585195,13849237,13821259,13646252]],"container":"<table class=\"compact hover\">\n  <thead>\n    <tr>\n      <th>claim.year\u003c/th>\n      <th>0\u003c/th>\n      <th>1\u003c/th>\n      <th>2\u003c/th>\n      <th>3\u003c/th>\n      <th>4\u003c/th>\n      <th>5\u003c/th>\n      <th>6\u003c/th>\n      <th>7\u003c/th>\n      <th>8\u003c/th>\n      <th>9\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"searching":false,"paging":false,"info":false,"ordering":false,"scrollX":true,"columnDefs":[{"className":"dt-center","targets":[0,1,2,3,4,5,6,7,8,9,10]},{"className":"dt-right","targets":[0,1,2,3,4,5,6,7,8,9,10]}],"order":[],"autoWidth":false,"orderClasses":false,"rowCallback":"function(row, data) {\nDTWidget.formatCurrency(this, row, data, 1, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 2, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 3, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 4, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 5, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 6, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 7, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 8, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 9, '', 0, 3, ',', '.', true);\nDTWidget.formatCurrency(this, row, data, 10, '', 0, 3, ',', '.', true);\n}"}},"evals":["options.rowCallback"],"jsHooks":[]}</script>
+<p> </p>
+</div>
+<div id="cumulative-paid-loss-ratio" class="section level2">
+<h2>Cumulative paid Loss ratio</h2>
+<div id="htmlwidget-b149009526c2318fe3bc" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b149009526c2318fe3bc">{"x":{"filter":"none","data":[[1988,1989,1990,1991,1992,1993,1994,1995,1996,1997],[0.297091768239031,0.305691447242382,0.307123482005436,0.28189788187482,0.288037770764488,0.293491009206106,0.301048315417983,0.295780299720011,0.285502952066025,0.275225917985078],[0.57084850098633,0.580447377235294,0.57203451640764,0.524491058574452,0.528033649783576,0.533500617875563,0.533571396254601,0.510136668170087,0.484411543357555,0.465591887567281],[0.695376757199976,0.70645779814298,0.695700181602096,0.635211096604866,0.635814387020226,0.636658067815599,0.629269090579064,0.601806978706261,0.573214094726988,0.551447131121156],[0.761755171218692,0.775108017883125,0.760745185892207,0.693822574609415,0.689909602309521,0.68880170257485,0.681109181788349,0.652301861123235,0.622665126988695,0.601593620162387],[0.799091804357064,0.811511834373181,0.793322571784308,0.722493352408633,0.717423857884885,0.716138530869751,0.709625596848756,0.679805783071932,0.650944527070089,0.629088427494884],[0.818246465619858,0.829223664466128,0.808949485305192,0.735818835774799,0.731241294253795,0.72938014962071,0.722839526826971,0.692878860448046,0.664052077934112,0.64173717530941],[0.82709864987716,0.838256590377949,0.81633266878741,0.742859260632662,0.737982312815738,0.736449151162096,0.728965947924718,0.699498376912891,0.670440971742812,0.647257765516708],[0.831436079917682,0.842335962410954,0.820648634863365,0.746352986009498,0.741236571452727,0.739812302394111,0.731892671035382,0.702816672477999,0.673698435718624,0.650248864443278],[0.834024090728501,0.844335983210483,0.822392446405352,0.748286402136826,0.742830603826855,0.741249627456522,0.733347816317206,0.704985613702465,0.675405914582708,0.651775455597802],[0.834752695212209,0.845308661998118,0.823540989209358,0.749071999781447,0.743552345032418,0.742190149932892,0.734339985397736,0.705883843039278,0.676223032680908,0.652700679750859]],"container":"<table class=\"compact hover\">\n  <thead>\n    <tr>\n      <th>claim.year\u003c/th>\n      <th>0\u003c/th>\n      <th>1\u003c/th>\n      <th>2\u003c/th>\n      <th>3\u003c/th>\n      <th>4\u003c/th>\n      <th>5\u003c/th>\n      <th>6\u003c/th>\n      <th>7\u003c/th>\n      <th>8\u003c/th>\n      <th>9\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"searching":false,"paging":false,"info":false,"ordering":false,"scrollX":true,"columnDefs":[{"className":"dt-center","targets":[0,1,2,3,4,5,6,7,8,9,10]},{"className":"dt-right","targets":[0,1,2,3,4,5,6,7,8,9,10]}],"order":[],"autoWidth":false,"orderClasses":false,"rowCallback":"function(row, data) {\nDTWidget.formatPercentage(this, row, data, 1, 1);\nDTWidget.formatPercentage(this, row, data, 2, 1);\nDTWidget.formatPercentage(this, row, data, 3, 1);\nDTWidget.formatPercentage(this, row, data, 4, 1);\nDTWidget.formatPercentage(this, row, data, 5, 1);\nDTWidget.formatPercentage(this, row, data, 6, 1);\nDTWidget.formatPercentage(this, row, data, 7, 1);\nDTWidget.formatPercentage(this, row, data, 8, 1);\nDTWidget.formatPercentage(this, row, data, 9, 1);\nDTWidget.formatPercentage(this, row, data, 10, 1);\n}"}},"evals":["options.rowCallback"],"jsHooks":[]}</script>
+<hr />
+<p> </p>
+</div>
+<div id="chain-ladder-with-glm" class="section level2">
+<h2>Chain-Ladder with GLM</h2>
+<p>This basic reserving approach express the expected cumulative metric (typically either incurred or paid) seen at next development period as a directly proportional to previous development measure.</p>
+<p><span class="math display">\[ Cumulative_{t} = LDF_{t-1} * Cumulative_{t-1} \]</span></p>
+<p>Where <span class="math inline">\(LDF_{t-1}\)</span> is the loss development factor for period <span class="math inline">\(t-1\)</span> to <span class="math inline">\(t\)</span> derived from past experience.</p>
+<p>Such representation can be modeled in various ways using a GLM approach.</p>
+<ul>
+<li>Using a identity relationship :
+<ul>
+<li>Model <span class="math inline">\(Cumulative_t\)</span> using interaction of the development period and <span class="math inline">\(Cumulative_{t-1}\)</span> as the single predictor and include no intercept term. A Normal error distribution will be used.</li>
+</ul></li>
+<li>Using a log relationship:
+<ul>
+<li>Model <span class="math inline">\(Cumulative_t\)</span> using the development period as predictor variable and use <span class="math inline">\(log(Cumulative_{t-1})\)</span> as an offset term. Inclusion of an intercept term is optional and won’t affect the outcome. Various error distributions can be used : Poisson, quasi/over-dispersed Poisson, Gamma, Log-Normal, Pareto, etc.</li>
+</ul></li>
+</ul>
+<p> </p>
+<p>An alternative perspective is to model the incremental amount between <span class="math inline">\(t-1\)</span> and <span class="math inline">\(t\)</span>.</p>
+<p><span class="math display">\[ \begin{align*}
+Cumulative_{t}- Cumulative_{t-1} &amp;= LDF_{t-1} * Cumulative_{t-1} - Cumulative_{t-1} \\
+Incremental_{t} &amp;= (LDF_{t-1}-1) * Cumulative_{t-1} \\
+&amp;= IDF_{t-1} * Cumulative_{t-1} \\
+\end{align*}\]</span></p>
+<p>Such representation can also be modeled in various ways using a GLM approach.</p>
+<ul>
+<li>Using a identity relationship :
+<ul>
+<li>Model <span class="math inline">\(Incremental_t\)</span> using interaction of the development period and <span class="math inline">\(Incurred_{t-1}\)</span> as the single predictor and include no intercept term. A Normal error distribution will be used.</li>
+</ul></li>
+<li>Using a log relationship:
+<ul>
+<li>Model <span class="math inline">\(Incremental_t\)</span> using the development period as predictor variable and use <span class="math inline">\(log(Incurred_{t-1})\)</span> as an offset term. Inclusion of an intercept term is optional and won’t affect the outcome. Various error distributions can be used : Poisson, quasi/over-dispersed Poisson, Gamma, Log-Normal, Pareto, etc.</li>
+</ul></li>
+</ul>
+<hr />
+<p> </p>
+</div>
+</div>
+<div id="model-design" class="section level1">
+<h1>Model design</h1>
+<pre class="r"><code>### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit&lt;-filter(data.prep, !is.na(incurred_prev), CY&lt;=1997)
+
+
+#### Cumulative models
+fit.glm.norm.cum&lt;-glm(cum.paid~factor(lag):cum.paid_prev-1, data=data.fit, family=gaussian(link = &quot;identity&quot;))
+coef(fit.glm.norm.cum)</code></pre>
+<pre><code>## factor(lag)1:cum.paid_prev factor(lag)2:cum.paid_prev 
+##                   1.793221                   1.197519 
+## factor(lag)3:cum.paid_prev factor(lag)4:cum.paid_prev 
+##                   1.088069                   1.042475 
+## factor(lag)5:cum.paid_prev factor(lag)6:cum.paid_prev 
+##                   1.020280                   1.009990 
+## factor(lag)7:cum.paid_prev factor(lag)8:cum.paid_prev 
+##                   1.005135                   1.002698 
+## factor(lag)9:cum.paid_prev 
+##                   1.000874</code></pre>
+<pre class="r"><code>fit.glm.pois.cum&lt;-glm(cum.paid~factor(lag), data=data.fit, family=poisson(link = &quot;log&quot;), offset=log(cum.paid_prev))
+exp(coef(fit.glm.pois.cum))</code></pre>
+<pre><code>##  (Intercept) factor(lag)2 factor(lag)3 factor(lag)4 factor(lag)5 
+##    1.8065360    0.6642123    0.6027365    0.5772726    0.5648664 
+## factor(lag)6 factor(lag)7 factor(lag)8 factor(lag)9 
+##    0.5591060    0.5563869    0.5550516    0.5540291</code></pre>
+<pre class="r"><code>fit.glm.quasi.pois.cum&lt;-glm(cum.paid~factor(lag)-1, data=data.fit, family=quasipoisson(link = &quot;log&quot;), offset=log(cum.paid_prev))
+
+fit.glm.gamma.cum&lt;-glm(cum.paid~factor(lag), data=data.fit, family=Gamma(link = &quot;log&quot;), offset=log(cum.paid_prev))
+
+fit.glm.lnorm.cum&lt;-glm(log(cum.paid)~factor(lag), data=data.fit, family=gaussian(link = &quot;identity&quot;), offset=log(cum.paid_prev))
+
+
+#### Incremental models
+fit.glm.norm.inc&lt;-glm(paid~factor(lag):cum.paid_prev-1, data=data.fit, family=gaussian(link = &quot;identity&quot;))
+coef(fit.glm.norm.inc)</code></pre>
+<pre><code>## factor(lag)1:cum.paid_prev factor(lag)2:cum.paid_prev 
+##               0.7932213157               0.1975187463 
+## factor(lag)3:cum.paid_prev factor(lag)4:cum.paid_prev 
+##               0.0880690523               0.0424754431 
+## factor(lag)5:cum.paid_prev factor(lag)6:cum.paid_prev 
+##               0.0202802156               0.0099903849 
+## factor(lag)7:cum.paid_prev factor(lag)8:cum.paid_prev 
+##               0.0051345245               0.0026979085 
+## factor(lag)9:cum.paid_prev 
+##               0.0008736012</code></pre>
+<pre class="r"><code>fit.glm.norm.inc.interc&lt;-glm(paid~factor(lag):cum.paid_prev, data=data.fit, family=gaussian(link = &quot;identity&quot;))
+coef(fit.glm.norm.inc)</code></pre>
+<pre><code>## factor(lag)1:cum.paid_prev factor(lag)2:cum.paid_prev 
+##               0.7932213157               0.1975187463 
+## factor(lag)3:cum.paid_prev factor(lag)4:cum.paid_prev 
+##               0.0880690523               0.0424754431 
+## factor(lag)5:cum.paid_prev factor(lag)6:cum.paid_prev 
+##               0.0202802156               0.0099903849 
+## factor(lag)7:cum.paid_prev factor(lag)8:cum.paid_prev 
+##               0.0051345245               0.0026979085 
+## factor(lag)9:cum.paid_prev 
+##               0.0008736012</code></pre>
+<pre class="r"><code>fit.glm.pois.inc&lt;-glm(paid~factor(lag), data=data.fit, family=poisson(link = &quot;log&quot;), offset=log(cum.paid_prev))
+summary(fit.glm.pois.inc)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = paid ~ factor(lag), family = poisson(link = &quot;log&quot;), 
+##     data = data.fit, offset = log(cum.paid_prev))
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -302.569   -40.536     6.986    63.021   219.989  
+## 
+## Coefficients:
+##                Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  -0.2150067  0.0001728 -1244.1   &lt;2e-16 ***
+## factor(lag)2 -1.3948141  0.0003267 -4269.7   &lt;2e-16 ***
+## factor(lag)3 -2.2056284  0.0004468 -4936.7   &lt;2e-16 ***
+## factor(lag)4 -2.9347208  0.0006492 -4520.8   &lt;2e-16 ***
+## factor(lag)5 -3.6746879  0.0010050 -3656.5   &lt;2e-16 ***
+## factor(lag)6 -4.3856675  0.0015998 -2741.3   &lt;2e-16 ***
+## factor(lag)7 -5.0570481  0.0025961 -1948.0   &lt;2e-16 ***
+## factor(lag)8 -5.6918833  0.0044659 -1274.5   &lt;2e-16 ***
+## factor(lag)9 -6.8278798  0.0114834  -594.6   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 100502308  on 44  degrees of freedom
+## Residual deviance:    402249  on 36  degrees of freedom
+## AIC: 402943
+## 
+## Number of Fisher Scoring iterations: 3</code></pre>
+<pre class="r"><code>fit.glm.quasi.pois.inc&lt;-glm(paid~factor(lag)-1, data=data.fit, family=quasipoisson(link = &quot;log&quot;), offset=log(cum.paid_prev))
+summary(fit.glm.quasi.pois.inc)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = paid ~ factor(lag) - 1, family = quasipoisson(link = &quot;log&quot;), 
+##     data = data.fit, offset = log(cum.paid_prev))
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -302.569   -40.536     6.986    63.021   219.989  
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## factor(lag)1 -0.21501    0.01823 -11.797 6.30e-14 ***
+## factor(lag)2 -1.60982    0.02923 -55.066  &lt; 2e-16 ***
+## factor(lag)3 -2.42064    0.04345 -55.713  &lt; 2e-16 ***
+## factor(lag)4 -3.14973    0.06599 -47.732  &lt; 2e-16 ***
+## factor(lag)5 -3.88969    0.10440 -37.257  &lt; 2e-16 ***
+## factor(lag)6 -4.60067    0.16773 -27.429  &lt; 2e-16 ***
+## factor(lag)7 -5.27205    0.27317 -19.300  &lt; 2e-16 ***
+## factor(lag)8 -5.90689    0.47061 -12.551 1.03e-14 ***
+## factor(lag)9 -7.04289    1.21088  -5.816 1.22e-06 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for quasipoisson family taken to be 11121.34)
+## 
+##     Null deviance: 528318461  on 45  degrees of freedom
+## Residual deviance:    402249  on 36  degrees of freedom
+## AIC: NA
+## 
+## Number of Fisher Scoring iterations: 3</code></pre>
+<pre class="r"><code>fit.glm.gamma.inc&lt;-glm(paid~factor(lag), data=data.fit, family=Gamma(link = &quot;log&quot;), offset=log(cum.paid_prev))
+
+fit.glm.lnorm.inc&lt;-glm(log(paid)~factor(lag), data=data.fit, family=gaussian(link = &quot;identity&quot;), offset=log(cum.paid_prev))</code></pre>
+<p> </p>
+<div id="comparison-of-model-predictions-with-actual-results" class="section level2">
+<h2>Comparison of model predictions with actual results</h2>
+<div id="htmlwidget-7916f6f487b75093193d" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-7916f6f487b75093193d">{"x":{"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"xaxis":{"domain":[0,1],"title":"claim.year"},"yaxis":{"domain":[0,1],"title":"LR.paid"},"hovermode":"closest"},"source":"A","config":{"modeBarButtonsToAdd":[{"name":"Collaborate","icon":{"width":1000,"ascent":500,"descent":-50,"path":"M487 375c7-10 9-23 5-36l-79-259c-3-12-11-23-22-31-11-8-22-12-35-12l-263 0c-15 0-29 5-43 15-13 10-23 23-28 37-5 13-5 25-1 37 0 0 0 3 1 7 1 5 1 8 1 11 0 2 0 4-1 6 0 3-1 5-1 6 1 2 2 4 3 6 1 2 2 4 4 6 2 3 4 5 5 7 5 7 9 16 13 26 4 10 7 19 9 26 0 2 0 5 0 9-1 4-1 6 0 8 0 2 2 5 4 8 3 3 5 5 5 7 4 6 8 15 12 26 4 11 7 19 7 26 1 1 0 4 0 9-1 4-1 7 0 8 1 2 3 5 6 8 4 4 6 6 6 7 4 5 8 13 13 24 4 11 7 20 7 28 1 1 0 4 0 7-1 3-1 6-1 7 0 2 1 4 3 6 1 1 3 4 5 6 2 3 3 5 5 6 1 2 3 5 4 9 2 3 3 7 5 10 1 3 2 6 4 10 2 4 4 7 6 9 2 3 4 5 7 7 3 2 7 3 11 3 3 0 8 0 13-1l0-1c7 2 12 2 14 2l218 0c14 0 25-5 32-16 8-10 10-23 6-37l-79-259c-7-22-13-37-20-43-7-7-19-10-37-10l-248 0c-5 0-9-2-11-5-2-3-2-7 0-12 4-13 18-20 41-20l264 0c5 0 10 2 16 5 5 3 8 6 10 11l85 282c2 5 2 10 2 17 7-3 13-7 17-13z m-304 0c-1-3-1-5 0-7 1-1 3-2 6-2l174 0c2 0 4 1 7 2 2 2 4 4 5 7l6 18c0 3 0 5-1 7-1 1-3 2-6 2l-173 0c-3 0-5-1-8-2-2-2-4-4-4-7z m-24-73c-1-3-1-5 0-7 2-2 3-2 6-2l174 0c2 0 5 0 7 2 3 2 4 4 5 7l6 18c1 2 0 5-1 6-1 2-3 3-5 3l-174 0c-3 0-5-1-7-3-3-1-4-4-5-6z"},"click":"function(gd) { \n        // is this being viewed in RStudio?\n        if (location.search == '?viewer_pane=1') {\n          alert('To learn about plotly for collaboration, visit:\\n https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html');\n        } else {\n          window.open('https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html', '_blank');\n        }\n      }"}],"modeBarButtonsToRemove":["sendDataToCloud","sendDataToCloud"],"editable":false,"showLink":false,"sendData":false},"data":[{"x":[1988,1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.834752695212209,0.845308661998118,0.823540989209358,0.749071999781447,0.743552345032418,0.742190149932892,0.734339985397736,0.705883843039278,0.676223032680908,0.652700679750859],"mode":"lines+markers","type":"scatter","name":"actual","line":{"fillcolor":"rgba(255,215,0,0.5)","color":"rgba(255,215,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845073596176298,0.82361900127884,0.749374632169093,0.745106324909604,0.744778248928065,0.739007020377642,0.711521722722368,0.688632729785579,0.712442942167941],"mode":"lines+markers","type":"scatter","name":"gamma_cum","line":{"fillcolor":"rgba(189,182,0,0.5)","color":"rgba(189,182,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845073596176298,0.823619001278841,0.749374632169096,0.745106324909607,0.744778248928069,0.739007020377645,0.71152172272237,0.688632729785583,0.712442942167909],"mode":"lines+markers","type":"scatter","name":"gamma_inc","line":{"fillcolor":"rgba(124,149,0,0.5)","color":"rgba(124,149,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845073596176298,0.823598508038543,0.749353348382179,0.745063309945055,0.744666521501962,0.738796600590184,0.711190080235832,0.687973393827464,0.710490695161891],"mode":"lines+markers","type":"scatter","name":"lnorm_inc","line":{"fillcolor":"rgba(57,117,0,0.5)","color":"rgba(57,117,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845073596176298,0.823581523645041,0.749342001219317,0.744991782045946,0.744401568779462,0.7380619341707,0.709561020549931,0.683957843712842,0.69684802309178],"mode":"lines+markers","type":"scatter","name":"norm_inc","line":{"fillcolor":"rgba(48,94,50,0.5)","color":"rgba(48,94,50,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.835507458576339,0.7988509306926,0.72165556051988,0.697704709953826,0.675645087425621,0.648581952629969,0.613498619651791,0.585651927713275,0.580787552311388],"mode":"lines+markers","type":"scatter","name":"norm_interc_inc","line":{"fillcolor":"rgba(75,78,117,0.5)","color":"rgba(75,78,117,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845073596176298,0.823600190342164,0.749357887497142,0.745047907334863,0.744582695460116,0.738516540566546,0.710517556156579,0.686255142840507,0.704380113924789],"mode":"lines+markers","type":"scatter","name":"quasi.pois_cum","line":{"fillcolor":"rgba(74,55,184,0.5)","color":"rgba(74,55,184,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845073596176298,0.823600190344109,0.749357887498915,0.745047907336694,0.744582695462603,0.738516540569363,0.71051755615947,0.686255142844517,0.704380113939022],"mode":"lines+markers","type":"scatter","name":"quasi.pois_inc","line":{"fillcolor":"rgba(0,0,255,0.5)","color":"rgba(0,0,255,1)"},"xaxis":"x","yaxis":"y"}],"base_url":"https://plot.ly"},"evals":["config.modeBarButtonsToAdd.0.click"],"jsHooks":[]}</script>
+<p> </p>
+<p>It can be observed that the incremental and cumulative models result in the same predicted outcomes. Given that the incremental model allow for more flexible model design,it is that structure that will be employed ongoing.</p>
+<ul>
+<li><p>Having an intercept term for the log model result in the same outcome.</p></li>
+<li><p>Adding an intercept term on an additional model structure has an influence on the outcome.</p></li>
+<li><p>Poisson and quasi-Poisson result in the same prediction. However, the underlying modeled variance is different and thus the quasi-Poisson will be preferred since the dispersion if significantly greater than the fixed mean/variation relationship implied by the simple Poisson distribution.</p></li>
+</ul>
+<p>Poisson projected LR</p>
+<div id="htmlwidget-6dea068039cbfbfe8eea" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6dea068039cbfbfe8eea">{"x":{"filter":"none","data":[[1989,1990,1991,1992,1993,1994,1995,1996,1997],[null,null,null,null,null,null,null,null,0.497205538874744],[null,null,null,null,null,null,null,0.581256762140019,0.5966085771641],[null,null,null,null,null,null,0.655286652007737,0.632910237163436,0.649626293682086],[null,null,null,null,null,0.710304112101027,0.683374730471109,0.660039177371893,0.677471747656932],[null,null,null,null,0.730784703302309,0.724830961386392,0.697350831053741,0.673538028763526,0.691327122848544],[null,null,null,0.738586657741492,0.738125480305997,0.732111932688694,0.704355762767512,0.680303759423067,0.69827154604528],[null,null,0.746672395914749,0.742377861530369,0.741914316847073,0.735869901376592,0.707971257589321,0.683795794058785,0.701855810265713],[null,0.822881320198605,0.748703818910859,0.744397600666256,0.743932794847107,0.737871934728809,0.709897388916956,0.685656152776067,0.703765303693791],[0.845073596176298,0.823600190344109,0.749357887498915,0.745047907336694,0.744582695462603,0.738516540569363,0.71051755615947,0.686255142844517,0.704380113939022]],"container":"<table class=\"compact hover\">\n  <thead>\n    <tr>\n      <th>claim.year\u003c/th>\n      <th>1\u003c/th>\n      <th>2\u003c/th>\n      <th>3\u003c/th>\n      <th>4\u003c/th>\n      <th>5\u003c/th>\n      <th>6\u003c/th>\n      <th>7\u003c/th>\n      <th>8\u003c/th>\n      <th>9\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"searching":false,"paging":false,"info":false,"ordering":false,"scrollX":true,"columnDefs":[{"className":"dt-center","targets":[0,1,2,3,4,5,6,7,8,9]},{"className":"dt-right","targets":[0,1,2,3,4,5,6,7,8,9]}],"order":[],"autoWidth":false,"orderClasses":false,"rowCallback":"function(row, data) {\nDTWidget.formatPercentage(this, row, data, 1, 1);\nDTWidget.formatPercentage(this, row, data, 2, 1);\nDTWidget.formatPercentage(this, row, data, 3, 1);\nDTWidget.formatPercentage(this, row, data, 4, 1);\nDTWidget.formatPercentage(this, row, data, 5, 1);\nDTWidget.formatPercentage(this, row, data, 6, 1);\nDTWidget.formatPercentage(this, row, data, 7, 1);\nDTWidget.formatPercentage(this, row, data, 8, 1);\nDTWidget.formatPercentage(this, row, data, 9, 1);\n}"}},"evals":["options.rowCallback"],"jsHooks":[]}</script>
+<p> </p>
+<p>Log-normal projected LR</p>
+<div id="htmlwidget-b3a7e5d674042a06fa98" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b3a7e5d674042a06fa98">{"x":{"filter":"none","data":[[1989,1990,1991,1992,1993,1994,1995,1996,1997],[null,null,null,null,null,null,null,null,0.500266285400665],[null,null,null,null,null,null,null,0.582161086150565,0.601215161089569],[null,null,null,null,null,null,0.655658260011563,0.634254400991627,0.655013484988118],[null,null,null,null,null,0.710493485179226,0.683944563805513,0.66161730292286,0.683271972001126],[null,null,null,null,0.730851866817496,0.725090841536285,0.697996462569686,0.675210479699598,0.697310052113254],[null,null,null,0.738606400765727,0.738213050992753,0.732394000316714,0.705026725127579,0.682011240460839,0.704333401103543],[null,null,0.746669398229832,0.742394725373368,0.741999358102816,0.736150461418339,0.708642819016118,0.685509287542812,0.707945938921544],[null,0.822879639361419,0.748699283756039,0.744412989830623,0.744016547719852,0.738151750302397,0.710569325988256,0.687372904003005,0.709870551364696],[0.845073596176298,0.823598508038543,0.749353348382179,0.745063309945055,0.744666521501962,0.738796600590184,0.711190080235832,0.687973393827464,0.710490695161891]],"container":"<table class=\"compact hover\">\n  <thead>\n    <tr>\n      <th>claim.year\u003c/th>\n      <th>1\u003c/th>\n      <th>2\u003c/th>\n      <th>3\u003c/th>\n      <th>4\u003c/th>\n      <th>5\u003c/th>\n      <th>6\u003c/th>\n      <th>7\u003c/th>\n      <th>8\u003c/th>\n      <th>9\u003c/th>\n    \u003c/tr>\n  \u003c/thead>\n\u003c/table>","options":{"searching":false,"paging":false,"info":false,"ordering":false,"scrollX":true,"columnDefs":[{"className":"dt-center","targets":[0,1,2,3,4,5,6,7,8,9]},{"className":"dt-right","targets":[0,1,2,3,4,5,6,7,8,9]}],"order":[],"autoWidth":false,"orderClasses":false,"rowCallback":"function(row, data) {\nDTWidget.formatPercentage(this, row, data, 1, 1);\nDTWidget.formatPercentage(this, row, data, 2, 1);\nDTWidget.formatPercentage(this, row, data, 3, 1);\nDTWidget.formatPercentage(this, row, data, 4, 1);\nDTWidget.formatPercentage(this, row, data, 5, 1);\nDTWidget.formatPercentage(this, row, data, 6, 1);\nDTWidget.formatPercentage(this, row, data, 7, 1);\nDTWidget.formatPercentage(this, row, data, 8, 1);\nDTWidget.formatPercentage(this, row, data, 9, 1);\n}"}},"evals":["options.rowCallback"],"jsHooks":[]}</script>
+<p> </p>
+</div>
+</div>
+<div id="incremental-paid-with-trending-on-accident-year" class="section level1">
+<h1>Incremental paid with trending on accident year</h1>
+<pre class="r"><code>### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit&lt;-filter(data.prep, !is.na(incurred_prev), CY&lt;=1997)
+
+
+fit.glm.quasi.pois&lt;-glm(paid~factor(lag):log(cum.paid_prev) + claim.year, data=data.fit, family=quasipoisson(link = &quot;log&quot;))
+
+fit.glm.lnorm&lt;-glm(log(paid)~factor(lag):log(cum.paid_prev) + claim.year, data=data.fit, family=gaussian(link = &quot;identity&quot;))
+
+fit.glm.norm&lt;-glm(paid~factor(lag):cum.paid_prev + claim.year, data=data.fit, family=gaussian(link = &quot;identity&quot;))</code></pre>
+<p> </p>
+<div id="comparison-of-model-predictions-with-actual-results-1" class="section level2">
+<h2>Comparison of model predictions with actual results</h2>
+<div id="htmlwidget-b30993dd4a45e6b239c5" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b30993dd4a45e6b239c5">{"x":{"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"xaxis":{"domain":[0,1],"title":"claim.year"},"yaxis":{"domain":[0,1],"title":"LR.paid"},"hovermode":"closest"},"source":"A","config":{"modeBarButtonsToAdd":[{"name":"Collaborate","icon":{"width":1000,"ascent":500,"descent":-50,"path":"M487 375c7-10 9-23 5-36l-79-259c-3-12-11-23-22-31-11-8-22-12-35-12l-263 0c-15 0-29 5-43 15-13 10-23 23-28 37-5 13-5 25-1 37 0 0 0 3 1 7 1 5 1 8 1 11 0 2 0 4-1 6 0 3-1 5-1 6 1 2 2 4 3 6 1 2 2 4 4 6 2 3 4 5 5 7 5 7 9 16 13 26 4 10 7 19 9 26 0 2 0 5 0 9-1 4-1 6 0 8 0 2 2 5 4 8 3 3 5 5 5 7 4 6 8 15 12 26 4 11 7 19 7 26 1 1 0 4 0 9-1 4-1 7 0 8 1 2 3 5 6 8 4 4 6 6 6 7 4 5 8 13 13 24 4 11 7 20 7 28 1 1 0 4 0 7-1 3-1 6-1 7 0 2 1 4 3 6 1 1 3 4 5 6 2 3 3 5 5 6 1 2 3 5 4 9 2 3 3 7 5 10 1 3 2 6 4 10 2 4 4 7 6 9 2 3 4 5 7 7 3 2 7 3 11 3 3 0 8 0 13-1l0-1c7 2 12 2 14 2l218 0c14 0 25-5 32-16 8-10 10-23 6-37l-79-259c-7-22-13-37-20-43-7-7-19-10-37-10l-248 0c-5 0-9-2-11-5-2-3-2-7 0-12 4-13 18-20 41-20l264 0c5 0 10 2 16 5 5 3 8 6 10 11l85 282c2 5 2 10 2 17 7-3 13-7 17-13z m-304 0c-1-3-1-5 0-7 1-1 3-2 6-2l174 0c2 0 4 1 7 2 2 2 4 4 5 7l6 18c0 3 0 5-1 7-1 1-3 2-6 2l-173 0c-3 0-5-1-8-2-2-2-4-4-4-7z m-24-73c-1-3-1-5 0-7 2-2 3-2 6-2l174 0c2 0 5 0 7 2 3 2 4 4 5 7l6 18c1 2 0 5-1 6-1 2-3 3-5 3l-174 0c-3 0-5-1-7-3-3-1-4-4-5-6z"},"click":"function(gd) { \n        // is this being viewed in RStudio?\n        if (location.search == '?viewer_pane=1') {\n          alert('To learn about plotly for collaboration, visit:\\n https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html');\n        } else {\n          window.open('https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html', '_blank');\n        }\n      }"}],"modeBarButtonsToRemove":["sendDataToCloud","sendDataToCloud"],"editable":false,"showLink":false,"sendData":false},"data":[{"x":[1988,1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.834752695212209,0.845308661998118,0.823540989209358,0.749071999781447,0.743552345032418,0.742190149932892,0.734339985397736,0.705883843039278,0.676223032680908,0.652700679750859],"mode":"lines+markers","type":"scatter","name":"actual","line":{"fillcolor":"rgba(255,215,0,0.5)","color":"rgba(255,215,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845014446683662,0.823283840960821,0.748657280336321,0.743205503273495,0.740267763907935,0.729128201266478,0.692411735278611,0.651733424029351,0.626727750374127],"mode":"lines+markers","type":"scatter","name":"lnorm_inc","line":{"fillcolor":"rgba(103,138,0,0.5)","color":"rgba(103,138,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.834669962331208,0.79812717344073,0.72781655504733,0.705363507768129,0.685083915242721,0.660417838981967,0.633378275043564,0.615965925697238,0.618716051963969],"mode":"lines+markers","type":"scatter","name":"norm_inc","line":{"fillcolor":"rgba(70,84,95,0.5)","color":"rgba(70,84,95,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845016127124372,0.823289505184045,0.74861310375859,0.743093669477696,0.739998395328226,0.728480595646149,0.690536558251751,0.646552534705981,0.612743644637166],"mode":"lines+markers","type":"scatter","name":"quasi.pois_inc","line":{"fillcolor":"rgba(0,0,255,0.5)","color":"rgba(0,0,255,1)"},"xaxis":"x","yaxis":"y"}],"base_url":"https://plot.ly"},"evals":["config.modeBarButtonsToAdd.0.click"],"jsHooks":[]}</script>
+<p> </p>
+</div>
+</div>
+<div id="incremental-paid-with-trending-on-calendar-year" class="section level1">
+<h1>Incremental paid with trending on calendar year</h1>
+<pre class="r"><code>### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit&lt;-filter(data.prep, !is.na(incurred_prev), CY&lt;=1997)
+
+fit.glm.quasi.pois&lt;-glm(paid~factor(lag):log(cum.paid_prev) + CY, data=data.fit, family=quasipoisson(link = &quot;log&quot;))
+
+fit.glm.lnorm&lt;-glm(log(paid)~factor(lag):log(cum.paid_prev) + CY, data=data.fit, family=gaussian(link = &quot;identity&quot;))
+
+fit.glm.norm&lt;-glm(paid~factor(lag):cum.paid_prev + CY, data=data.fit, family=gaussian(link = &quot;identity&quot;))</code></pre>
+<p> </p>
+<div id="comparison-of-model-predictions-with-actual-results-2" class="section level2">
+<h2>Comparison of model predictions with actual results</h2>
+<div id="htmlwidget-545ccaaec8103fb69c77" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-545ccaaec8103fb69c77">{"x":{"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"xaxis":{"domain":[0,1],"title":"claim.year"},"yaxis":{"domain":[0,1],"title":"LR.paid"},"hovermode":"closest"},"source":"A","config":{"modeBarButtonsToAdd":[{"name":"Collaborate","icon":{"width":1000,"ascent":500,"descent":-50,"path":"M487 375c7-10 9-23 5-36l-79-259c-3-12-11-23-22-31-11-8-22-12-35-12l-263 0c-15 0-29 5-43 15-13 10-23 23-28 37-5 13-5 25-1 37 0 0 0 3 1 7 1 5 1 8 1 11 0 2 0 4-1 6 0 3-1 5-1 6 1 2 2 4 3 6 1 2 2 4 4 6 2 3 4 5 5 7 5 7 9 16 13 26 4 10 7 19 9 26 0 2 0 5 0 9-1 4-1 6 0 8 0 2 2 5 4 8 3 3 5 5 5 7 4 6 8 15 12 26 4 11 7 19 7 26 1 1 0 4 0 9-1 4-1 7 0 8 1 2 3 5 6 8 4 4 6 6 6 7 4 5 8 13 13 24 4 11 7 20 7 28 1 1 0 4 0 7-1 3-1 6-1 7 0 2 1 4 3 6 1 1 3 4 5 6 2 3 3 5 5 6 1 2 3 5 4 9 2 3 3 7 5 10 1 3 2 6 4 10 2 4 4 7 6 9 2 3 4 5 7 7 3 2 7 3 11 3 3 0 8 0 13-1l0-1c7 2 12 2 14 2l218 0c14 0 25-5 32-16 8-10 10-23 6-37l-79-259c-7-22-13-37-20-43-7-7-19-10-37-10l-248 0c-5 0-9-2-11-5-2-3-2-7 0-12 4-13 18-20 41-20l264 0c5 0 10 2 16 5 5 3 8 6 10 11l85 282c2 5 2 10 2 17 7-3 13-7 17-13z m-304 0c-1-3-1-5 0-7 1-1 3-2 6-2l174 0c2 0 4 1 7 2 2 2 4 4 5 7l6 18c0 3 0 5-1 7-1 1-3 2-6 2l-173 0c-3 0-5-1-8-2-2-2-4-4-4-7z m-24-73c-1-3-1-5 0-7 2-2 3-2 6-2l174 0c2 0 5 0 7 2 3 2 4 4 5 7l6 18c1 2 0 5-1 6-1 2-3 3-5 3l-174 0c-3 0-5-1-7-3-3-1-4-4-5-6z"},"click":"function(gd) { \n        // is this being viewed in RStudio?\n        if (location.search == '?viewer_pane=1') {\n          alert('To learn about plotly for collaboration, visit:\\n https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html');\n        } else {\n          window.open('https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html', '_blank');\n        }\n      }"}],"modeBarButtonsToRemove":["sendDataToCloud","sendDataToCloud"],"editable":false,"showLink":false,"sendData":false},"data":[{"x":[1988,1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.834752695212209,0.845308661998118,0.823540989209358,0.749071999781447,0.743552345032418,0.742190149932892,0.734339985397736,0.705883843039278,0.676223032680908,0.652700679750859],"mode":"lines+markers","type":"scatter","name":"actual","line":{"fillcolor":"rgba(255,215,0,0.5)","color":"rgba(255,215,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.84501542502632,0.823288487945611,0.748665129911343,0.743224697400635,0.740306598858954,0.729195202627069,0.692500522185403,0.651832860335135,0.626746180675364],"mode":"lines+markers","type":"scatter","name":"lnorm_inc","line":{"fillcolor":"rgba(103,138,0,0.5)","color":"rgba(103,138,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.844489930415041,0.818057782298256,0.721478629541549,0.702937324817904,0.684519433773819,0.655785533125678,0.58370121495949,0.498548062170177,0.447949447287486],"mode":"lines+markers","type":"scatter","name":"norm_inc","line":{"fillcolor":"rgba(70,84,95,0.5)","color":"rgba(70,84,95,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845017949794307,0.823297787532185,0.748622716800871,0.743119982831013,0.740054513872314,0.728578232678812,0.690614860681615,0.646477093821243,0.6122043545816],"mode":"lines+markers","type":"scatter","name":"quasi.pois_inc","line":{"fillcolor":"rgba(0,0,255,0.5)","color":"rgba(0,0,255,1)"},"xaxis":"x","yaxis":"y"}],"base_url":"https://plot.ly"},"evals":["config.modeBarButtonsToAdd.0.click"],"jsHooks":[]}</script>
+<p> </p>
+</div>
+</div>
+<div id="incremental-paid-based-on-earned-premium" class="section level1">
+<h1>Incremental paid based on earned premium</h1>
+<p>Such approach is similar in perspective to Bornhuetter-Ferguson to the extent that the future incremental payments are independent of past payments and assumed to be a fixed percentage of the earned premium. Main difference with B-F is that there’s no assumed <em>a priori</em> loss ratio, the % of earned premium paid at each lag is derived entirely from the data rather than from external hypothesis.</p>
+<pre class="r"><code>### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit&lt;-filter(data.prep, !is.na(incurred_prev), CY&lt;=1997)
+
+fit.glm.quasi.pois&lt;-glm(paid~factor(lag):log(earned.prm.dir), data=data.fit, family=quasipoisson(link = &quot;log&quot;))
+
+fit.glm.gamma&lt;-glm(paid~factor(lag):log(earned.prm.dir), data=data.fit, family=Gamma(link = &quot;log&quot;))
+
+fit.glm.lnorm&lt;-glm(log(paid)~factor(lag):log(earned.prm.dir), data=data.fit, family=gaussian(link = &quot;identity&quot;))
+
+fit.glm.norm&lt;-glm(paid~factor(lag):earned.prm.dir-1, data=data.fit, family=gaussian(link = &quot;identity&quot;))</code></pre>
+<p> </p>
+<div id="comparison-of-model-predictions-with-actual-results-3" class="section level2">
+<h2>Comparison of model predictions with actual results</h2>
+<div id="htmlwidget-0daca7d67a219ae36bed" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-0daca7d67a219ae36bed">{"x":{"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"xaxis":{"domain":[0,1],"title":"claim.year"},"yaxis":{"domain":[0,1],"title":"LR.paid"},"hovermode":"closest"},"source":"A","config":{"modeBarButtonsToAdd":[{"name":"Collaborate","icon":{"width":1000,"ascent":500,"descent":-50,"path":"M487 375c7-10 9-23 5-36l-79-259c-3-12-11-23-22-31-11-8-22-12-35-12l-263 0c-15 0-29 5-43 15-13 10-23 23-28 37-5 13-5 25-1 37 0 0 0 3 1 7 1 5 1 8 1 11 0 2 0 4-1 6 0 3-1 5-1 6 1 2 2 4 3 6 1 2 2 4 4 6 2 3 4 5 5 7 5 7 9 16 13 26 4 10 7 19 9 26 0 2 0 5 0 9-1 4-1 6 0 8 0 2 2 5 4 8 3 3 5 5 5 7 4 6 8 15 12 26 4 11 7 19 7 26 1 1 0 4 0 9-1 4-1 7 0 8 1 2 3 5 6 8 4 4 6 6 6 7 4 5 8 13 13 24 4 11 7 20 7 28 1 1 0 4 0 7-1 3-1 6-1 7 0 2 1 4 3 6 1 1 3 4 5 6 2 3 3 5 5 6 1 2 3 5 4 9 2 3 3 7 5 10 1 3 2 6 4 10 2 4 4 7 6 9 2 3 4 5 7 7 3 2 7 3 11 3 3 0 8 0 13-1l0-1c7 2 12 2 14 2l218 0c14 0 25-5 32-16 8-10 10-23 6-37l-79-259c-7-22-13-37-20-43-7-7-19-10-37-10l-248 0c-5 0-9-2-11-5-2-3-2-7 0-12 4-13 18-20 41-20l264 0c5 0 10 2 16 5 5 3 8 6 10 11l85 282c2 5 2 10 2 17 7-3 13-7 17-13z m-304 0c-1-3-1-5 0-7 1-1 3-2 6-2l174 0c2 0 4 1 7 2 2 2 4 4 5 7l6 18c0 3 0 5-1 7-1 1-3 2-6 2l-173 0c-3 0-5-1-8-2-2-2-4-4-4-7z m-24-73c-1-3-1-5 0-7 2-2 3-2 6-2l174 0c2 0 5 0 7 2 3 2 4 4 5 7l6 18c1 2 0 5-1 6-1 2-3 3-5 3l-174 0c-3 0-5-1-7-3-3-1-4-4-5-6z"},"click":"function(gd) { \n        // is this being viewed in RStudio?\n        if (location.search == '?viewer_pane=1') {\n          alert('To learn about plotly for collaboration, visit:\\n https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html');\n        } else {\n          window.open('https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html', '_blank');\n        }\n      }"}],"modeBarButtonsToRemove":["sendDataToCloud","sendDataToCloud"],"editable":false,"showLink":false,"sendData":false},"data":[{"x":[1988,1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.834752695212209,0.845308661998118,0.823540989209358,0.749071999781447,0.743552345032418,0.742190149932892,0.734339985397736,0.705883843039278,0.676223032680908,0.652700679750859],"mode":"lines+markers","type":"scatter","name":"actual","line":{"fillcolor":"rgba(255,215,0,0.5)","color":"rgba(255,215,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.844997883237241,0.82323956736485,0.748881286599695,0.743582219684483,0.740888285190841,0.730412823703136,0.698252885719117,0.670436396604108,0.665770530312596],"mode":"lines+markers","type":"scatter","name":"gamma_inc","line":{"fillcolor":"rgba(140,158,0,0.5)","color":"rgba(140,158,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.844997942254998,0.823232706597649,0.748865616686775,0.743561830618644,0.740854378839615,0.730372441831386,0.698196740976646,0.670358928628114,0.665593135339571],"mode":"lines+markers","type":"scatter","name":"lnorm_inc","line":{"fillcolor":"rgba(0,100,0,0.5)","color":"rgba(0,100,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845064587694191,0.823638693933994,0.750093655150202,0.746358729529938,0.746577986435515,0.741914382266514,0.71987184006453,0.70810052653593,0.73180022250096],"mode":"lines+markers","type":"scatter","name":"norm_inc","line":{"fillcolor":"rgba(78,73,133,0.5)","color":"rgba(78,73,133,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845000308515604,0.823253277742179,0.748932694893811,0.743697672962508,0.741120236150741,0.730912456866807,0.699335513879768,0.672536237857358,0.670165978826919],"mode":"lines+markers","type":"scatter","name":"quasi.pois_inc","line":{"fillcolor":"rgba(0,0,255,0.5)","color":"rgba(0,0,255,1)"},"xaxis":"x","yaxis":"y"}],"base_url":"https://plot.ly"},"evals":["config.modeBarButtonsToAdd.0.click"],"jsHooks":[]}</script>
+<p> </p>
+</div>
+</div>
+<div id="incremental-payment-based-on-cumulative-paid-and-earned-premium" class="section level1">
+<h1>Incremental payment based on cumulative paid and earned premium</h1>
+<p>Adding flexibility by mixing dependency on both cumulative paid and earned premium.</p>
+<pre class="r"><code>### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit&lt;-filter(data.prep, !is.na(incurred_prev), CY&lt;=1997)
+
+fit.glm.quasi.pois&lt;-glm(paid~ factor(lag):log(cum.paid_prev) + factor(lag):log(earned.prm.dir), data=data.fit, family=quasipoisson(link = &quot;log&quot;))
+
+fit.glm.gamma&lt;-glm(paid ~ factor(lag):log(cum.paid_prev) + factor(lag):log(earned.prm.dir), data=data.fit, family=Gamma(link = &quot;log&quot;))
+
+fit.glm.lnorm&lt;-glm(log(paid)~ factor(lag):log(cum.paid_prev) + factor(lag):log(earned.prm.dir), data=data.fit, family=gaussian(link = &quot;identity&quot;))
+
+fit.glm.norm&lt;-glm(paid~ factor(lag):cum.paid_prev + factor(lag):earned.prm.dir - 1, data=data.fit, family=gaussian(link = &quot;identity&quot;))</code></pre>
+<p> </p>
+<div id="comparison-of-model-predictions-with-actual-results-4" class="section level2">
+<h2>Comparison of model predictions with actual results</h2>
+<div id="htmlwidget-a352f72251498b7af4fa" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-a352f72251498b7af4fa">{"x":{"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"xaxis":{"domain":[0,1],"title":"claim.year"},"yaxis":{"domain":[0,1],"title":"LR.paid"},"hovermode":"closest"},"source":"A","config":{"modeBarButtonsToAdd":[{"name":"Collaborate","icon":{"width":1000,"ascent":500,"descent":-50,"path":"M487 375c7-10 9-23 5-36l-79-259c-3-12-11-23-22-31-11-8-22-12-35-12l-263 0c-15 0-29 5-43 15-13 10-23 23-28 37-5 13-5 25-1 37 0 0 0 3 1 7 1 5 1 8 1 11 0 2 0 4-1 6 0 3-1 5-1 6 1 2 2 4 3 6 1 2 2 4 4 6 2 3 4 5 5 7 5 7 9 16 13 26 4 10 7 19 9 26 0 2 0 5 0 9-1 4-1 6 0 8 0 2 2 5 4 8 3 3 5 5 5 7 4 6 8 15 12 26 4 11 7 19 7 26 1 1 0 4 0 9-1 4-1 7 0 8 1 2 3 5 6 8 4 4 6 6 6 7 4 5 8 13 13 24 4 11 7 20 7 28 1 1 0 4 0 7-1 3-1 6-1 7 0 2 1 4 3 6 1 1 3 4 5 6 2 3 3 5 5 6 1 2 3 5 4 9 2 3 3 7 5 10 1 3 2 6 4 10 2 4 4 7 6 9 2 3 4 5 7 7 3 2 7 3 11 3 3 0 8 0 13-1l0-1c7 2 12 2 14 2l218 0c14 0 25-5 32-16 8-10 10-23 6-37l-79-259c-7-22-13-37-20-43-7-7-19-10-37-10l-248 0c-5 0-9-2-11-5-2-3-2-7 0-12 4-13 18-20 41-20l264 0c5 0 10 2 16 5 5 3 8 6 10 11l85 282c2 5 2 10 2 17 7-3 13-7 17-13z m-304 0c-1-3-1-5 0-7 1-1 3-2 6-2l174 0c2 0 4 1 7 2 2 2 4 4 5 7l6 18c0 3 0 5-1 7-1 1-3 2-6 2l-173 0c-3 0-5-1-8-2-2-2-4-4-4-7z m-24-73c-1-3-1-5 0-7 2-2 3-2 6-2l174 0c2 0 5 0 7 2 3 2 4 4 5 7l6 18c1 2 0 5-1 6-1 2-3 3-5 3l-174 0c-3 0-5-1-7-3-3-1-4-4-5-6z"},"click":"function(gd) { \n        // is this being viewed in RStudio?\n        if (location.search == '?viewer_pane=1') {\n          alert('To learn about plotly for collaboration, visit:\\n https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html');\n        } else {\n          window.open('https://cpsievert.github.io/plotly_book/plot-ly-for-collaboration.html', '_blank');\n        }\n      }"}],"modeBarButtonsToRemove":["sendDataToCloud","sendDataToCloud"],"editable":false,"showLink":false,"sendData":false},"data":[{"x":[1988,1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.834752695212209,0.845308661998118,0.823540989209358,0.749071999781447,0.743552345032418,0.742190149932892,0.734339985397736,0.705883843039278,0.676223032680908,0.652700679750859],"mode":"lines+markers","type":"scatter","name":"actual","line":{"fillcolor":"rgba(255,215,0,0.5)","color":"rgba(255,215,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845007095153545,0.823784181069508,0.75699023110285,0.751788611887145,0.748622257817121,0.73885891151499,0.711949368629119,0.691233155532698,0.687918598897263],"mode":"lines+markers","type":"scatter","name":"gamma_inc","line":{"fillcolor":"rgba(140,158,0,0.5)","color":"rgba(140,158,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845007022948271,0.823783394470755,0.756969895744347,0.751766440164047,0.748585877586163,0.738812607751074,0.711892531358911,0.691168983803086,0.687738133160547],"mode":"lines+markers","type":"scatter","name":"lnorm_inc","line":{"fillcolor":"rgba(0,100,0,0.5)","color":"rgba(0,100,0,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845073596176298,0.824538259218989,0.755726733453355,0.751252762086625,0.749637593945993,0.741442371614895,0.706449463556507,0.658993471959022,0.646282185940372],"mode":"lines+markers","type":"scatter","name":"norm_inc","line":{"fillcolor":"rgba(78,73,133,0.5)","color":"rgba(78,73,133,1)"},"xaxis":"x","yaxis":"y"},{"x":[1989,1990,1991,1992,1993,1994,1995,1996,1997],"y":[0.845003079835935,0.823740615531016,0.75677976292848,0.751487122224147,0.748203090538546,0.738181491626983,0.710838263971418,0.689333997029243,0.683375330559909],"mode":"lines+markers","type":"scatter","name":"quasi.pois_inc","line":{"fillcolor":"rgba(0,0,255,0.5)","color":"rgba(0,0,255,1)"},"xaxis":"x","yaxis":"y"}],"base_url":"https://plot.ly"},"evals":["config.modeBarButtonsToAdd.0.click"],"jsHooks":[]}</script>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
