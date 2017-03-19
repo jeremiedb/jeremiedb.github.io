@@ -11,7 +11,7 @@
 
 
 
-<title>AWS-Ubuntu Cheat Sheet</title>
+<title>Useful Data Preperation Functions</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -24,7 +24,7 @@
 
 <style type="text/css">code{white-space: pre;}</style>
 <link rel="stylesheet"
-      href="site_libs/highlight/default.css"
+      href="site_libs/highlight/textmate.css"
       type="text/css" />
 <script src="site_libs/highlight/highlight.js"></script>
 <style type="text/css">
@@ -167,7 +167,7 @@ $(document).ready(function () {
 
 
 
-<!DOCTYPE html>
+
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -192,6 +192,7 @@ $(document).ready(function () {
     <li class="dropdown">
   <a class="dropdown-toggle" data-toggle="dropdown">Kaggle <b class="caret"></b></a>
   <ul class="dropdown-menu" role="menu">
+    <li><a href="kaggle_functions.html">BNP</a></li>
     <li><a href="kaggle_BNP.html">BNP</a></li>
     <li><a href="kaggle_MNIST.html">MNIST</a></li>
   </ul>
@@ -223,115 +224,47 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">AWS-Ubuntu Cheat Sheet</h1>
+<h1 class="title toc-ignore">Useful Data Preperation Functions</h1>
 
 </div>
 
-
-<div id="cheatsheet-for-aws-ubuntu-server-setup" class="section level1">
-<h1>Cheatsheet for AWS Ubuntu server setup</h1>
+<div id="TOC">
 <ul>
-<li><p>Start AWS EC2 instance (Linux 14.04 LTS - Trusty Tahr - micro t2)</p></li>
-<li><p>Register new key if none already exist (when prompted during the EC2 setup)</p></li>
-<li><p>Access server through putty (well explained in EC2 connexion console)</p>
-<ul>
-<li>Install putty: <a href="http://www.putty.org/" class="uri">http://www.putty.org/</a><br />
-</li>
-<li>Convert Amazon key to putty format
-<ul>
-<li>Open PuTTYgen
-<ul>
-<li>Type of key to generate: SSH-2-RSA</li>
-<li>Load the .pem key obtained during EC2 seting up</li>
-<li>Save private key (optional to have a passphrase)</li>
-</ul></li>
-<li>In PuTTY
-<ul>
-<li>Host Name: <a href="mailto:ubuntu@public_dns_name">ubuntu@public_dns_name</a><br />
-</li>
-<li>In Connection &gt; SSH &gt; Auth</li>
-</ul></li>
-</ul></li>
-</ul></li>
-<li><p>Proceed to server setting up</p></li>
-<li><p>Copy the the required files from local CPU to EC2 (RStudio works well for that)</p></li>
-<li><p>Copy the Website and Shiny Apps in appropirate folders</p></li>
+<li><a href="#create-knn-features">Create KNN features</a></li>
+<li><a href="#create-interactions">Create interactions</a></li>
 </ul>
-<p> </p>
-<div id="server-setup" class="section level2">
-<h2>Server setup</h2>
-<p>If starting a new session, first need to install and setup few utilities</p>
-<p>Add a sudo (super user do) account - sudo adduser jeremie sudo</p>
-<ol style="list-style-type: decimal">
-<li><p>Get latest packages</p>
-<p><code>sudo nano /etc/apt/sources.list</code></p>
-<p>Add the following line to the file:<br />
-<code>deb https://cran.rstudio.com/bin/linux/ubuntu trusty/</code><br />
-And save using Ctrl-X</p></li>
-<li><p>R-base-dev (dev because it apparently makes the installation of packages possible-easier) and Shiny package</p>
-<p><code>sudo apt-get update</code><br />
-<code>sudo apt-get install r-base-dev</code></p></li>
-<li><p>Shiny Server</p>
-<pre class="r"><code>sudo apt-get install gdebi-core  
-wget https://download3.rstudio.org/ubuntu-12.04/x86_64/shiny-server-1.4.2.786-amd64.deb  
-sudo gdebi shiny-server-1.4.2.786-amd64.deb</code></pre></li>
-<li><p>RStudio</p>
-<p><code>wget https://download2.rstudio.org/rstudio-server-0.99.896-amd64.deb</code><br />
-<code>sudo gdebi rstudio-server-0.99.896-amd64.deb</code></p></li>
-<li><p>Apache Web Server</p>
-<p><code>sudo apt-get install apache2</code></p>
-<p>The website will then need to be copied in the following directory<br />
-/var/www/html/index.html</p></li>
-</ol>
-<p>Memomy may be limited and swap space required (<a href="http://aws-labs.com/add-swap-ubuntu-14-04/" class="uri">http://aws-labs.com/add-swap-ubuntu-14-04/</a>):</p>
-<pre class="r"><code>sudo fallocate -l 4G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile  </code></pre>
-<p>For R package installation, some additional Linux packages may be required:</p>
-<pre class="r"><code>sudo apt-get install libcurl4-openssl-dev
-sudo apt-get install libssl-dev
-sudo apt-get install libgeos-dev
-sudo apt-get install libxml2-dev
-sudo apt-get install libgdal-dev
-sudo apt-get install libproj-dev</code></pre>
-<p> </p>
 </div>
-<div id="upload-website-from-local-machine-to-the-aws-instance" class="section level2">
-<h2>Upload website from local machine to the AWS Instance</h2>
-<p>Copy website</p>
-<p><code>sudo cp -a /home/jeremie/Website/. /var/www/html/</code></p>
-<p>Remove all files within a directory:</p>
-<p><code>sudo rm -rf /var/www/html/*</code></p>
-<p>Remove folder:</p>
-<p><code>sudo rm -rf /var/www/html/Website</code></p>
-<p> </p>
+
+<div id="create-knn-features" class="section level2">
+<h2>Create KNN features</h2>
+<p>The function <em>knn_creator</em> creates a knn predictor.</p>
+<p>It takes a matrix as argument (preferrably a PCA or other scale controlled matrix).</p>
+<p>Matrix is assumes to contain both labeled and non-labelled data (train and holdout).</p>
+<p>Argument <em>train_tot_flag</em> is a logical vector that identifies the training (labelled) rows.</p>
+<p>Argument <em>target_train_tot</em> provides the training labels associated with the training rows.</p>
+<pre class="r"><code>knn_creator&lt;- function(data_tot_matrix, train_tot_flag, target_train_tot, k){
+  
+  knn_train_tot&lt;- FNN::knn.reg(train = data_tot_matrix[train_tot_flag, ], test = data_tot_matrix[train_tot_flag, ], y = target_train_tot, k = k+1)$pred
+  knn_train_tot&lt;- (knn_train_tot*(k+1)-target_train_tot)/k
+  
+  knn_holdout&lt;- FNN::knn.reg(train = data_tot_matrix[train_tot_flag, ], test = data_tot_matrix[!train_tot_flag, ], y = target_train_tot, k = k)$pred
+  return(c(knn_train_tot, knn_holdout))
+}
+
+knn_10&lt;- knn_creator(data_tot_matrix = data_tot_pca[, 1:21], train_tot_flag = train_tot_flag, target_train_tot = target_train_tot, k = 10)</code></pre>
 </div>
-<div id="upload-a-shiny-app" class="section level2">
-<h2>Upload a Shiny app</h2>
-<p>Copy the folder containing the application (creating KillerApp)</p>
-<p><code>sudo cp -ar /home/jeremie/KillerApp/ /srv/shiny-server/</code></p>
-<p>To delete an existing app:</p>
-<p><code>sudo rm -rf /srv/shiny-server/WoundedApp</code></p>
-<p> </p>
-</div>
-<div id="manipulation-with-shiny-server" class="section level2">
-<h2>Manipulation with Shiny server</h2>
-<ul>
-<li>sudo start shiny-server<br />
-</li>
-<li>sudo stop shiny-server<br />
-</li>
-<li>sudo restart shiny-server</li>
-</ul>
-<p>Configuration Shiny Server is mainly configured via the following file: <code>/etc/shiny-server/shiny-server.conf</code></p>
-<p>We can use the minimalistic text editor Nano to edit the configuration file.</p>
-<p><code>sudo nano /etc/shiny-server/shiny-server.conf</code></p>
-<p>in Nano, change the port to 80 Save the file by hitting Ctrl+X and answering Yes Restarting the server by typing</p>
-<p><code>sudo restart shiny-server</code></p>
-<p>Opening your port 80 in the AWS EC2 Security Group by adding a custom TCP rule for port 80, as described above.</p>
-<p> </p>
-</div>
+<div id="create-interactions" class="section level2">
+<h2>Create interactions</h2>
+<p>This function creates a one-hot encoded matrix from the interactions of the provided variables.</p>
+<pre class="r"><code>cross_creator&lt;- function(v1, v2, bins){
+  
+  v1_bin&lt;- cut(v1, breaks = quantile(v1, probs = 0:bins/bins), include.lowest = T, labels = F)
+  v2_bin&lt;- cut(v2, breaks = quantile(v2, probs = 0:bins/bins), include.lowest = T, labels = F)
+  
+  var_cross&lt;- paste(v1_bin, v2_bin, sep=&quot;_&quot;)
+  
+  return(model.matrix(~.-1, data.frame(var_cross)))
+}</code></pre>
 </div>
 
 

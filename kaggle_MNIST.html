@@ -11,7 +11,7 @@
 
 
 
-<title>AWS-Ubuntu Cheat Sheet</title>
+<title>Kaggle: MNIST</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -223,114 +223,137 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">AWS-Ubuntu Cheat Sheet</h1>
+<h1 class="title toc-ignore">Kaggle: MNIST</h1>
 
 </div>
 
-
-<div id="cheatsheet-for-aws-ubuntu-server-setup" class="section level1">
-<h1>Cheatsheet for AWS Ubuntu server setup</h1>
+<div id="TOC">
 <ul>
-<li><p>Start AWS EC2 instance (Linux 14.04 LTS - Trusty Tahr - micro t2)</p></li>
-<li><p>Register new key if none already exist (when prompted during the EC2 setup)</p></li>
-<li><p>Access server through putty (well explained in EC2 connexion console)</p>
-<ul>
-<li>Install putty: <a href="http://www.putty.org/" class="uri">http://www.putty.org/</a><br />
-</li>
-<li>Convert Amazon key to putty format
-<ul>
-<li>Open PuTTYgen
-<ul>
-<li>Type of key to generate: SSH-2-RSA</li>
-<li>Load the .pem key obtained during EC2 seting up</li>
-<li>Save private key (optional to have a passphrase)</li>
+<li><a href="#data-import-and-preparation">Data import and preparation</a></li>
+<li><a href="#deep-learning-with-mxnet">Deep learning with MXNet</a><ul>
+<li><a href="#define-the-model">Define the model</a></li>
+<li><a href="#prepare-an-executor-to-visualise-fitted-model-on-single-images">Prepare an executor to visualise fitted model on single images</a></li>
+<li><a href="#train-the-model">Train the model</a></li>
+<li><a href="#make-prediction">Make prediction</a></li>
+<li><a href="#connecting-layer-options">Connecting layer options</a></li>
+<li><a href="#activation-layer-options">Activation layer options</a></li>
+<li><a href="#output-layer-options">Output layer options</a></li>
 </ul></li>
-<li>In PuTTY
-<ul>
-<li>Host Name: <a href="mailto:ubuntu@public_dns_name">ubuntu@public_dns_name</a><br />
-</li>
-<li>In Connection &gt; SSH &gt; Auth</li>
-</ul></li>
-</ul></li>
-</ul></li>
-<li><p>Proceed to server setting up</p></li>
-<li><p>Copy the the required files from local CPU to EC2 (RStudio works well for that)</p></li>
-<li><p>Copy the Website and Shiny Apps in appropirate folders</p></li>
 </ul>
-<p> </p>
-<div id="server-setup" class="section level2">
-<h2>Server setup</h2>
-<p>If starting a new session, first need to install and setup few utilities</p>
-<p>Add a sudo (super user do) account - sudo adduser jeremie sudo</p>
-<ol style="list-style-type: decimal">
-<li><p>Get latest packages</p>
-<p><code>sudo nano /etc/apt/sources.list</code></p>
-<p>Add the following line to the file:<br />
-<code>deb https://cran.rstudio.com/bin/linux/ubuntu trusty/</code><br />
-And save using Ctrl-X</p></li>
-<li><p>R-base-dev (dev because it apparently makes the installation of packages possible-easier) and Shiny package</p>
-<p><code>sudo apt-get update</code><br />
-<code>sudo apt-get install r-base-dev</code></p></li>
-<li><p>Shiny Server</p>
-<pre class="r"><code>sudo apt-get install gdebi-core  
-wget https://download3.rstudio.org/ubuntu-12.04/x86_64/shiny-server-1.4.2.786-amd64.deb  
-sudo gdebi shiny-server-1.4.2.786-amd64.deb</code></pre></li>
-<li><p>RStudio</p>
-<p><code>wget https://download2.rstudio.org/rstudio-server-0.99.896-amd64.deb</code><br />
-<code>sudo gdebi rstudio-server-0.99.896-amd64.deb</code></p></li>
-<li><p>Apache Web Server</p>
-<p><code>sudo apt-get install apache2</code></p>
-<p>The website will then need to be copied in the following directory<br />
-/var/www/html/index.html</p></li>
-</ol>
-<p>Memomy may be limited and swap space required (<a href="http://aws-labs.com/add-swap-ubuntu-14-04/" class="uri">http://aws-labs.com/add-swap-ubuntu-14-04/</a>):</p>
-<pre class="r"><code>sudo fallocate -l 4G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile  </code></pre>
-<p>For R package installation, some additional Linux packages may be required:</p>
-<pre class="r"><code>sudo apt-get install libcurl4-openssl-dev
-sudo apt-get install libssl-dev
-sudo apt-get install libgeos-dev
-sudo apt-get install libxml2-dev
-sudo apt-get install libgdal-dev
-sudo apt-get install libproj-dev</code></pre>
-<p> </p>
 </div>
-<div id="upload-website-from-local-machine-to-the-aws-instance" class="section level2">
-<h2>Upload website from local machine to the AWS Instance</h2>
-<p>Copy website</p>
-<p><code>sudo cp -a /home/jeremie/Website/. /var/www/html/</code></p>
-<p>Remove all files within a directory:</p>
-<p><code>sudo rm -rf /var/www/html/*</code></p>
-<p>Remove folder:</p>
-<p><code>sudo rm -rf /var/www/html/Website</code></p>
+
 <p> </p>
+<div id="data-import-and-preparation" class="section level1">
+<h1>Data import and preparation</h1>
+<pre><code>
+train &lt;- read.csv(&#39;data/train.csv&#39;, header=TRUE)
+test &lt;- read.csv(&#39;data/test.csv&#39;, header=TRUE)
+
+set.seed(123123)
+eval_rows&lt;- sample(1:nrow(train), size = round(0.1*nrow(train),0), replace = F)
+eval&lt;- train[eval_rows,]
+train&lt;- train[-eval_rows,]
+
+
+train &lt;- data.matrix(train)
+eval &lt;- data.matrix(eval)
+test &lt;- data.matrix(test)
+
+train_x &lt;- train[,-1]
+train_labels &lt;- train[,1]
+
+eval_x &lt;- eval[,-1]
+eval_labels &lt;- eval[,1]
+
+### Normalise pixels into 0-1 range
+train_x &lt;- t(train_x/255)
+eval_x &lt;- t(eval_x/255)
+test &lt;- t(test/255)
+
+
+################################################################
+#### Convert data to arrays
+train.array &lt;- train_x
+dim(train.array) &lt;- c(28, 28, 1, ncol(train_x))
+eval.array &lt;- eval_x
+dim(eval.array) &lt;- c(28, 28, 1, ncol(eval_x))
+test.array &lt;- test
+dim(test.array) &lt;- c(28, 28, 1, ncol(test))
+</code></pre>
 </div>
-<div id="upload-a-shiny-app" class="section level2">
-<h2>Upload a Shiny app</h2>
-<p>Copy the folder containing the application (creating KillerApp)</p>
-<p><code>sudo cp -ar /home/jeremie/KillerApp/ /srv/shiny-server/</code></p>
-<p>To delete an existing app:</p>
-<p><code>sudo rm -rf /srv/shiny-server/WoundedApp</code></p>
-<p> </p>
+<div id="deep-learning-with-mxnet" class="section level1">
+<h1>Deep learning with MXNet</h1>
+<div id="define-the-model" class="section level2">
+<h2>Define the model</h2>
+<pre><code>
+# input
+data &lt;- mx.symbol.Variable(&#39;data&#39;)
+# first conv
+conv1 &lt;- mx.symbol.Convolution(data=data, kernel=c(3,3), num_filter=32)
+tanh1 &lt;- mx.symbol.Activation(data=conv1, act_type=&quot;relu&quot;)
+pool1 &lt;- mx.symbol.Pooling(data=tanh1, pool_type=&quot;max&quot;, kernel=c(2,2), stride=c(2,2))
+# second conv
+conv2 &lt;- mx.symbol.Convolution(data=pool1, kernel=c(5,5), num_filter=32)
+tanh2 &lt;- mx.symbol.Activation(data=conv2, act_type=&quot;relu&quot;)
+pool2 &lt;- mx.symbol.Pooling(data=tanh2, pool_type=&quot;max&quot;, kernel=c(2,2), stride=c(2,2))
+# first fullc
+flatten &lt;- mx.symbol.Flatten(data=pool2)
+fc1 &lt;- mx.symbol.FullyConnected(data=flatten, num_hidden=500)
+tanh3 &lt;- mx.symbol.Activation(data=fc1, act_type=&quot;relu&quot;)
+# second fullc
+fc2 &lt;- mx.symbol.FullyConnected(data=tanh3, num_hidden=10)
+# loss
+convnet &lt;- mx.symbol.SoftmaxOutput(data=fc2)
+
+</code></pre>
 </div>
-<div id="manipulation-with-shiny-server" class="section level2">
-<h2>Manipulation with Shiny server</h2>
-<ul>
-<li>sudo start shiny-server<br />
-</li>
-<li>sudo stop shiny-server<br />
-</li>
-<li>sudo restart shiny-server</li>
-</ul>
-<p>Configuration Shiny Server is mainly configured via the following file: <code>/etc/shiny-server/shiny-server.conf</code></p>
-<p>We can use the minimalistic text editor Nano to edit the configuration file.</p>
-<p><code>sudo nano /etc/shiny-server/shiny-server.conf</code></p>
-<p>in Nano, change the port to 80 Save the file by hitting Ctrl+X and answering Yes Restarting the server by typing</p>
-<p><code>sudo restart shiny-server</code></p>
-<p>Opening your port 80 in the AWS EC2 Security Group by adding a custom TCP rule for port 80, as described above.</p>
-<p> </p>
+<div id="prepare-an-executor-to-visualise-fitted-model-on-single-images" class="section level2">
+<h2>Prepare an executor to visualise fitted model on single images</h2>
+<pre><code>
+devices &lt;- mx.cpu()
+
+
+### To visualize convulation layer outputs
+out &lt;- mx.symbol.Group(c(tanh1, pool1, tanh2, pool2, tanh3, convnet))
+# Create an executor
+executor &lt;- mx.simple.bind(symbol=out, data=dim(test.array), ctx=devices)
+</code></pre>
+</div>
+<div id="train-the-model" class="section level2">
+<h2>Train the model</h2>
+<pre><code>
+mx.set.seed(0)
+
+model_convnet &lt;- mx.model.FeedForward.create(convnet, X=train.array, y=train_labels, eval.data = list(data=eval.array, label=eval_labels), 
+                                             ctx=devices, num.round=10, array.batch.size=100,
+                                             learning.rate=0.05, momentum=0.9, wd=0.00001,
+                                             eval.metric=mx.metric.accuracy, 
+                                             initializer=mx.init.uniform(0.1),
+                                             epoch.end.callback=mx.callback.log.train.metric(10)) 
+                                             
+</code></pre>
+</div>
+<div id="make-prediction" class="section level2">
+<h2>Make prediction</h2>
+<pre><code>pred_prob&lt;- t(predict(model_convnet, test.array))
+pred_labels&lt;- max.col(pred_prob)-1
+submit&lt;- data.frame(ImageId=1:length(pred_labels), Label=pred_labels)
+write.csv(submit, file = &quot;submit/mxnet_convnet_full.csv&quot;, row.names = F)
+</code></pre>
+</div>
+<div id="connecting-layer-options" class="section level2">
+<h2>Connecting layer options</h2>
+<p>fully_connected_layer: mx.symbol.FullyConnected(data=input_layer, num_hidden=10, no_bias=F, name=“Optional Layer Name”)</p>
+<p>convolution_layer &lt;- mx.symbol.Convolution(data=input_layer, kernel=c(3,3), num_filter=32, stride=c(y,x), dilate=c(y,x), pad=c(y,x), num_filter = integer)</p>
+</div>
+<div id="activation-layer-options" class="section level2">
+<h2>Activation layer options</h2>
+<p>activation &lt;- mx.symbol.Activation(data=connected_layer, act_type=c(“relu”,“tanh”,“sigmoid”,“softrelu”)</p>
+<p>activation &lt;- mx.symbol.LeakyReLU(data=connected_layer, act_type=c(“elu”,“leaky”,“prelu”,“rrelu”), slope=0.25 (elu and leaky), lower_bound=0.125 (relu), upper_bound=0.334 (relu))</p>
+</div>
+<div id="output-layer-options" class="section level2">
+<h2>Output layer options</h2>
+<p>softmax &lt;- mx.symbol.SoftmaxOutput(data=input) linear &lt;- mx.symbol.LinearRegressionOutput(data=input) logistic &lt;- mx.symbol.LogisticRegressionOutput(data=input) mean_abs_error&lt;- mx.symbol.MAERegressionOutput(data=input)</p>
 </div>
 </div>
 
