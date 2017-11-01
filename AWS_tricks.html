@@ -15,7 +15,7 @@
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<link href="site_libs/bootstrap-3.3.5/css/paper.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
@@ -100,34 +100,34 @@ button.code-folding-btn:focus {
 <style type="text/css">
 /* padding for bootstrap navbar */
 body {
-  padding-top: 51px;
+  padding-top: 64px;
   padding-bottom: 40px;
 }
 /* offset scroll position for anchor links (for fixed navbar)  */
 .section h1 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 69px;
+  margin-top: -69px;
 }
 
 .section h2 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 69px;
+  margin-top: -69px;
 }
 .section h3 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 69px;
+  margin-top: -69px;
 }
 .section h4 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 69px;
+  margin-top: -69px;
 }
 .section h5 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 69px;
+  margin-top: -69px;
 }
 .section h6 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 69px;
+  margin-top: -69px;
 }
 </style>
 
@@ -228,12 +228,12 @@ $(document).ready(function () {
 </div>
 
 
-<div id="cheatsheet-for-aws-ubuntu-server-setup" class="section level1">
-<h1>Cheatsheet for AWS Ubuntu server setup</h1>
+<div id="start-and-connect-to-instance" class="section level3">
+<h3>Start and connect to instance</h3>
 <ul>
 <li><p>Start AWS EC2 instance (Linux 16.04 LTS)</p></li>
 <li><p>Register new key if none already exist (when prompted during the EC2 setup)</p></li>
-<li><p>Access server through putty (well explained in EC2 connexion console)</p>
+<li><p>Access server through putty (well explained in EC2 connection console)</p>
 <ul>
 <li>Install putty: <a href="http://www.putty.org/" class="uri">http://www.putty.org/</a><br />
 </li>
@@ -255,11 +255,12 @@ $(document).ready(function () {
 </ul></li>
 <li><p>Proceed to server setting up</p></li>
 <li><p>Copy the the required files from local machine to EC2 (RStudio convenient for small files, winSCP otherwise)</p></li>
-<li><p>Copy the Website and Shiny Apps in appropirate folders</p></li>
+<li><p>Copy the Website and Shiny Apps in appropriate folders</p></li>
 </ul>
 <p> </p>
-<div id="server-setup" class="section level2">
-<h2>Server setup</h2>
+</div>
+<div id="server-setup" class="section level3">
+<h3>Server setup</h3>
 <p>If starting a new session, first need to install and setup few utilities</p>
 <p>Add a sudo (super user do) account</p>
 <pre><code>`sudo adduser &lt;user&gt; &amp;&amp; sudo adduser &lt;user&gt; sudo`</code></pre>
@@ -284,7 +285,7 @@ sudo gdebi shiny-server-1.4.2.786-amd64.deb</code></pre></li>
 <p>The website will then need to be copied in the following directory<br />
 /var/www/html/index.html</p></li>
 </ol>
-<p>Memomy may be limited and swap space required (<a href="http://aws-labs.com/add-swap-ubuntu-14-04/" class="uri">http://aws-labs.com/add-swap-ubuntu-14-04/</a>):</p>
+<p>Memory may be limited and swap space required (<a href="http://aws-labs.com/add-swap-ubuntu-14-04/" class="uri">http://aws-labs.com/add-swap-ubuntu-14-04/</a>):</p>
 <pre class="r"><code>sudo fallocate -l 4G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
@@ -326,14 +327,36 @@ sudo apt-get install libproj-dev</code></pre>
 <li>sudo restart shiny-server</li>
 </ul>
 <p>Configuration Shiny Server is mainly configured via the following file: <code>/etc/shiny-server/shiny-server.conf</code></p>
-<p>We can use the minimalistic text editor Nano to edit the configuration file.</p>
+<p>Can use the text editor Nano to edit the configuration file.</p>
 <p><code>sudo nano /etc/shiny-server/shiny-server.conf</code></p>
-<p>in Nano, change the port to 80 Save the file by hitting Ctrl+X and answering Yes Restarting the server by typing</p>
+<p>in Nano, change the port to 80 Save the file by hitting Ctrl+X and answering Yes Restart the server</p>
 <p>Open port 80 in the AWS EC2 Security Group by adding a custom TCP rule for port 80 to make apps available to all.</p>
 <p> </p>
 <div id="git-tricks" class="section level3">
 <h3>Git tricks</h3>
+<div id="commit-all-changes" class="section level4">
+<h4>Commit all changes</h4>
+<pre><code>git add . 
+git commit -m &quot;shortComment&quot;
+git pull origin master
+git push origin master</code></pre>
 </div>
+<div id="synchronise-fork-with-original-master" class="section level4">
+<h4>Synchronise fork with original master</h4>
+<p>Make sure that you’re on your master branch: <code>git checkout master</code></p>
+</div>
+</div>
+</div>
+<div id="add-the-remote-call-it-upstream" class="section level1">
+<h1>Add the remote, call it “upstream”:</h1>
+<pre><code>git remote add upstream https://github.com/whoever/whatever
+git fetch upstream
+git pull upstream master</code></pre>
+<p>If need to rebase the submodules</p>
+<p><code>git submodule update --init --recursive</code></p>
+<div id="create-new-branch" class="section level4">
+<h4>Create new branch</h4>
+<p><code>git checkout -b new-branch existing-branch</code></p>
 </div>
 </div>
 

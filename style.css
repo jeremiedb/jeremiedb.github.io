@@ -41,6 +41,12 @@ body,html {
 	color: rgba(255, 255, 255, 1) !important; 
 }
 
+/* font color for links in banner */
+.navbar-collapse a:active {
+  background: rgb(255, 10, 30) !important;
+  background: rgba(255, 10, 30, 0.65) !important;  
+}
+
 /* format for hovering links in banner */
 .navbar-collapse a:hover { 
     background: rgb(0, 10, 30) !important;
@@ -64,10 +70,10 @@ body,html {
 
 /* apply format when hovering dropdown elements */
 .navbar-nav .dropdown-menu li a:hover { 
-    	color: rgb(255, 255, 255) !important;
+  color: rgb(255, 255, 255) !important;
 	color: rgba(255, 255, 255, 1) !important;
 	background: rgb(0, 0, 255) !important;
-    	background: rgba(0, 0, 255, 1) !important; 
+  background: rgba(0, 0, 255, 1) !important; 
 }
 
 
