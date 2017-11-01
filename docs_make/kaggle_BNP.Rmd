@@ -1,0 +1,180 @@
+---
+title: "Kaggle: BNP"
+output: 
+  html_document:
+   toc: true
+   toc_depth: 2
+   number_section: false
+   self_contained: false
+---
+
+\ 
+
+#Data preparation steps
+
+##Import data
+
+```
+train<- read.table("data/train.csv", sep=",", header = T, stringsAsFactors = F)
+test<- read.table("data/test.csv", sep=",", header=T, stringsAsFactors = F)
+
+train$type<-"train"
+test$type<-"test"
+data_tot<- bind_rows(train, test)
+
+saveRDS(data_tot, file="data/data_tot.rds")
+data_tot<- readRDS(file="data/data_tot.rds")
+```
+
+
+##Identify the nature of the variables
+
+```
+var_type<- sapply(data_tot,class)
+char_var<- names(var_type)[var_type=="character"]
+num_var<- names(var_type)[var_type %in% c("numeric","integer")]
+```
+
+##Create a matrix of NA indicator variables
+
+```
+data_NA<- data_tot %>% 
+  select_(.dots = num_var) %>% 
+  mutate_each_(funs(ifelse(is.na(.),1,0)), vars=num_var) %>% 
+  select(-ID,-target)
+  
+colnames(data_NA)<- paste(colnames(data_NA),"_NA",sep="")
+```
+
+##Create variable with the number of missing values
+
+```
+NA_count<- rowSums(data_NA)
+```
+
+
+##Replace NA by median value - for character the empty character are removed from the quantile calculation
+
+```
+data_tot_adj<- data_tot %>% 
+  mutate_each_(funs(ifelse(is.na(.), -999, .)), vars=num_var) %>% 
+  mutate_each_(funs(ifelse(.=="", "ZZZ", .)), vars=char_var)
+``` 
+
+##Convert character into factors and bind the NA indicator columns
+
+```
+data_tot_no_sparse<- data_tot_adj %>% 
+  mutate_each_(funs(factor(.)), vars = char_var) 
+```
+
+
+##Remove variables with all unique values
+
+```
+data_tot_no_sparse<- data_tot_no_sparse[, !sapply(data_tot_no_sparse, function(x) length(unique(x))==1)]
+```
+
+#Modeling approaches
+
+##GBM
+
+###H2O
+
+With H2O, plain, non-sparse, data frame produced the best results. 
+
+###xgboost
+
+With xgboost, sparse matrix produced best results. Relationship between eval score and final score appear more distinct than for H2O. Need more test to clarify this. 
+
+
+##Variable engineering
+
+###Sparse data frame: convert factor variables into multiple indicator variables (one-hot encoding)
+
+```
+data_tot_matrix<- model.matrix(~ .-1, data=data_tot_no_sparse)
+data_tot_matrix_df<- as.data.frame(data_tot_matrix)
+```
+
+###Create indicator variables on the relevant levels of v22
+
+```
+v22_table<- as.data.frame(table(data_tot_no_sparse$v22)) %>% rename_(.dots = c("v22"="Var1","v22_freq"="Freq"))
+data_tot_no_sparse<- left_join(data_tot_no_sparse, v22_table, by="v22") %>% 
+  mutate(v22_factor=factor(ifelse(v22_freq<100, 0, v22))) %>% select(-v22_freq)
+```
+
+
+###PCA data compression
+
+BUild a PCA matrix excluding v22 and V50, then add v50 to it. 
+
+```
+data_tot_pca<- prcomp(data_tot_matrix_df_pca_no_v50, center=T, scale=T)
+data_tot_pca_predict<- as.data.frame(predict(data_tot_pca, newdata=data_tot_matrix_df_pca_no_v50))
+summary(data_tot_pca)
+```
+
+Did not provide any improvement. 
+
+###Create buckets of the strongest predictor: v50
+
+Test with Xgboost didn't provide any improvements.
+
+```
+data_tot_no_sparse$v50_cut<- factor(cut(data_tot_no_sparse$v50, breaks = quantile(data_tot_no_sparse$v50, probs = 0:10/10), include.lowest = T, labels = F))
+```
+
+###Interaction of bucketed v50 with first PCA components
+
+Initial concept was to create an interaction with all variables, though it resulted in a too heavy dataset. 
+
+The idea is that the interaction of v50 groups with first few PC should provide for the most relevant potential intereactions. 
+
+```
+for (i in 1:10) {
+  new_mat<-data_tot_ini
+  new_mat<- data_tot_ini*as.numeric(data_tot_ini[,"v50_cut"]==i)
+  colnames(new_mat)<- paste(colnames(new_mat),"_v50_",i,sep="")
+  data_tot_expand<- bind_cols(data_tot_expand, new_mat)
+  gc()
+}
+```
+
+To do.
+
+Also need to understand how/why xgb results in poorer fit when additional columns are provided. 
+
+
+###Impacts of tuning lambda and alpha parameters
+
+Tuning trade off between alpha and lambda resulted in some gains on out of sample data compared to the default $lambda=1$, $alpha=0$. 
+
+Two positive outcomes,but no significant gains: 
+
+-  $lambda=1$, $alpha=0.5$
+-  $lambda=0.5$, $alpha=1$
+
+
+###Stacking
+
+Split the training into 3 rather than 2 dataset: 
+
+  - train1 (35%)
+  - train2 (60%)
+  - eval (5%)
+
+Build an initial model(s) on train1 and use eval for parameter tuning. 
+
+Build a second model on train2 using prediction from train1 as an input variable. 
+Once train2 model is obtained, rerun train1 model(s) on full dataset and apply same train2 model on the updated train1 predictions. 
+
+Train1 models to try:  
+
+  - Multiple train1 models: model depth 1, 2, ... 11, 12.  
+      - Bad outcome, seems like the need to train a a sub sample results in much poorer results than single xgb on full data. 
+  - GAM model
+
+\ 
+

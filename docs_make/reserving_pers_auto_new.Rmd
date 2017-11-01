@@ -1,0 +1,562 @@
+---
+title: "Personal Auto Reserving"
+output: 
+  html_document:
+   toc: true
+   toc_depth: 2
+   toc_float: true
+   code_folding: hide
+   self_contained: false
+---
+
+> Data prepared by Glenn G. Meyer and Peng Shi and obtained from [CAS website](http://www.casact.org/research/index.cfm?fa=loss_reserves_data). 
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+require("dplyr")
+require("tidyr")
+require("DT")
+require("ggplot2")
+require("scales")
+require("plotly")
+require("RColorBrewer")
+
+
+################################
+#### Private passenger auto
+pp.auto <- read.table("C:/Data/Actuariat/Reserving/data/ppauto_pos.csv", sep=",", header = T, stringsAsFactors = F)
+pp.auto<- rename_(pp.auto, .dots = c("incurred"="IncurLoss_B",
+                                         "cum.paid"="CumPaidLoss_B",
+                                         "earned.prm.dir"="EarnedPremDIR_B",
+                                         "earned.prm.net"="EarnedPremNet_B",
+                                         "claim.year"="AccidentYear",
+                                         "dev.year"="DevelopmentYear"))
+
+pp.auto<-mutate(pp.auto, lag=dev.year-claim.year, CY=claim.year+lag)
+
+
+#################################
+### Data Preperation function
+DataPrep<-function(data, split="claim.year", lag="lag", id="CY") {
+  
+  data<-data %>% group_by_(.dots=c(split, lag, id)) %>% 
+    summarise_each_(funs(sum(.,na.rm=T)), vars=c("incurred","cum.paid","earned.prm.dir","earned.prm.net")) %>% 
+    ungroup()
+  data.previous<-data %>% select_(.dots=c(split,lag, "incurred","cum.paid")) %>% 
+    mutate(lag=lag+1) %>% 
+    rename_(.dots=c("incurred_prev"="incurred","cum.paid_prev"="cum.paid"))
+  data<-left_join(data, data.previous, by=c(split,lag))
+  data<-data %>% mutate(LR.paid=cum.paid/earned.prm.dir,
+                        LR.paid_prev=cum.paid_prev/earned.prm.dir,
+                        paid=ifelse(is.na(cum.paid_prev), 
+                                    cum.paid, 
+                                    cum.paid-cum.paid_prev))
+  
+  return(data)
+}
+
+#################################
+### Triangle functions
+TriPrep<-function(data, split="claim.year", lag="lag", var, type="currency") {
+  
+  data<-data %>% group_by_(.dots=c(split, lag)) %>% 
+    summarise_each_(funs(sum(.,na.rm=T)), vars=var) %>% 
+    ungroup()
+  
+  if (type=="currency") {
+    data <- data %>% mutate_each_(funs(round(., digits=0)), vars=var)
+    #data[[var]] <- round(data[[var]],digits=0)
+  }
+  
+  data <- data %>% select_(.dots=c(split, lag, var)) %>% spread_(key_col=lag, value_col=var)
+  
+  data.DT <- datatable(data,filter = "none", rownames = F, selection = "none", class="compact hover",
+                       options =  list(
+                         searching=F,
+                         paging=F,
+                         info=F,
+                         ordering=F,
+                         scrollX=T,
+                         columnDefs = list(list(className = 'dt-center', targets=1:ncol(data)-1)))
+  )
+  
+  if (type=="currency") {
+    data.DT<- data.DT %>% formatCurrency(columns=2:ncol(data), currency = "", mark = ",", digits = 0)
+  } else {
+    data.DT<- data.DT %>% formatPercentage(columns=2:ncol(data), digits = 1)
+  }
+  
+  return(data.DT)
+}
+
+
+###############################################
+#### Prediction function on cumulative model
+
+PredReserveCum <- function(model, data, CY.ini, lag.max=9, label) {
+  pred<-NULL
+  data<-data %>% filter(CY==CY.ini)
+  
+  for (i in 1:lag.max) {
+    data <- data %>% mutate(lag=lag+1, 
+                            CY=CY+1, 
+                            cum.paid_prev=cum.paid,
+                            incurred_prev=incurred, 
+                            LR.paid_prev=cum.paid_prev/earned.prm.dir) %>%
+      filter(lag<=lag.max)
+    
+    if (label=="lnorm") {
+      data$cum.paid <- exp(predict(object=model, newdata=data, type="response"))
+    } else {
+      data$cum.paid <- predict(object=model, newdata=data, type="response")
+    }
+    
+    data <- data %>% mutate(LR.paid=cum.paid/earned.prm.dir)
+    
+    pred <- bind_rows(pred, data)
+  }
+  
+  pred$model<-paste(label,"cum",sep="_")
+  pred
+}
+
+
+##############################################
+#### Prediction function on incremental model
+
+PredReserveInc <- function(model, data, CY.ini, lag.max=9, label) {
+  pred<-NULL
+  data<-data %>% filter(CY==CY.ini)
+  
+  for (i in 1:lag.max) {
+    data <- data %>% mutate(lag=lag+1, 
+                            CY=CY+1, 
+                            cum.paid_prev=cum.paid,
+                            incurred_prev=incurred, 
+                            LR.paid_prev=cum.paid_prev/earned.prm.dir) %>%
+      filter(lag<=lag.max)
+    
+    if (label=="lnorm") {
+      data$paid <- exp(predict(object=model, newdata=data, type="response"))
+    } else {
+      data$paid <- predict(object=model, newdata=data, type="response")
+    }
+    
+    data <- data %>% mutate(cum.paid= ifelse(is.na(cum.paid_prev), 
+                                             paid, 
+                                             cum.paid_prev+paid),
+                            LR.paid=cum.paid/earned.prm.dir)
+    
+    pred <- bind_rows(pred, data)
+  }
+  
+  pred$model<-paste(label,"inc",sep="_")
+  pred
+}
+
+
+
+```
+
+#Data overview
+
+\ 
+
+##Cumulative paid amount
+
+```{r, echo=FALSE}
+
+#Prepare initial data
+data.prep<-DataPrep(pp.auto, split = "claim.year", lag="lag", id = "CY")
+#data.prep<-DataPrep(pp.auto,split = "claim.year", lag="lag")
+#data.prep<-DataPrep(prod.liab,split = "claim.year", lag="lag")
+
+(tri.paid<- TriPrep(data.prep, split = "claim.year",lag = "lag", var="cum.paid", type = "currency"))
+
+
+```
+
+
+\ 
+
+##Cumulative paid Loss ratio
+
+```{r, echo=FALSE}
+
+(tri.LR.paid<- TriPrep(data.prep, split = "claim.year",lag = "lag", var="LR.paid", type="percent"))
+
+```
+
+***
+
+\ 
+
+##Chain-Ladder with GLM
+
+This basic reserving approach express the expected cumulative metric (typically either incurred or paid) seen at next development period as a directly proportional to previous development measure. 
+
+$$ Cumulative_{t} = LDF_{t-1} * Cumulative_{t-1} $$
+
+Where $LDF_{t-1}$ is the loss development factor for period $t-1$ to $t$ derived from past experience. 
+
+Such representation can be modeled in various ways using a GLM approach.
+
+- Using a identity relationship : 
+    - Model $Cumulative_t$ using interaction of the development period and $Cumulative_{t-1}$ as the single predictor and include no intercept term. A Normal error distribution will be used. 
+
+- Using a log relationship: 
+    - Model $Cumulative_t$ using the development period as predictor variable and use $log(Cumulative_{t-1})$ as an offset term. Inclusion of an intercept term is optional and won't affect the outcome. Various error distributions can be used : Poisson, quasi/over-dispersed Poisson, Gamma, Log-Normal, Pareto, etc. 
+
+\ 
+
+An alternative perspective is to model the incremental amount between $t-1$ and $t$. 
+
+$$ \begin{align*}
+Cumulative_{t}- Cumulative_{t-1} &= LDF_{t-1} * Cumulative_{t-1} - Cumulative_{t-1} \\
+Incremental_{t} &= (LDF_{t-1}-1) * Cumulative_{t-1} \\
+&= IDF_{t-1} * Cumulative_{t-1} \\
+\end{align*}$$
+
+Such representation can also be modeled in various ways using a GLM approach.
+
+- Using a identity relationship : 
+    - Model $Incremental_t$ using interaction of the development period and $Incurred_{t-1}$ as the single predictor and include no intercept term. A Normal error distribution will be used. 
+
+- Using a log relationship: 
+    - Model $Incremental_t$ using the development period as predictor variable and use $log(Incurred_{t-1})$ as an offset term. Inclusion of an intercept term is optional and won't affect the outcome. Various error distributions can be used : Poisson, quasi/over-dispersed Poisson, Gamma, Log-Normal, Pareto, etc. 
+
+***
+
+
+\ 
+
+#Model design
+
+```{r, echo=TRUE, warning=FALSE, message=F}
+
+### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit<-filter(data.prep, !is.na(incurred_prev), CY<=1997)
+
+
+#### Cumulative models
+fit.glm.norm.cum<-glm(cum.paid~factor(lag):cum.paid_prev-1, data=data.fit, family=gaussian(link = "identity"))
+coef(fit.glm.norm.cum)
+
+fit.glm.pois.cum<-glm(cum.paid~factor(lag), data=data.fit, family=poisson(link = "log"), offset=log(cum.paid_prev))
+exp(coef(fit.glm.pois.cum))
+
+fit.glm.quasi.pois.cum<-glm(cum.paid~factor(lag)-1, data=data.fit, family=quasipoisson(link = "log"), offset=log(cum.paid_prev))
+
+fit.glm.gamma.cum<-glm(cum.paid~factor(lag), data=data.fit, family=Gamma(link = "log"), offset=log(cum.paid_prev))
+
+fit.glm.lnorm.cum<-glm(log(cum.paid)~factor(lag), data=data.fit, family=gaussian(link = "identity"), offset=log(cum.paid_prev))
+
+
+#### Incremental models
+fit.glm.norm.inc<-glm(paid~factor(lag):cum.paid_prev-1, data=data.fit, family=gaussian(link = "identity"))
+coef(fit.glm.norm.inc)
+
+fit.glm.norm.inc.interc<-glm(paid~factor(lag):cum.paid_prev, data=data.fit, family=gaussian(link = "identity"))
+coef(fit.glm.norm.inc)
+
+fit.glm.pois.inc<-glm(paid~factor(lag), data=data.fit, family=poisson(link = "log"), offset=log(cum.paid_prev))
+summary(fit.glm.pois.inc)
+
+fit.glm.quasi.pois.inc<-glm(paid~factor(lag)-1, data=data.fit, family=quasipoisson(link = "log"), offset=log(cum.paid_prev))
+summary(fit.glm.quasi.pois.inc)
+
+fit.glm.gamma.inc<-glm(paid~factor(lag), data=data.fit, family=Gamma(link = "log"), offset=log(cum.paid_prev))
+
+fit.glm.lnorm.inc<-glm(log(paid)~factor(lag), data=data.fit, family=gaussian(link = "identity"), offset=log(cum.paid_prev))
+
+
+``` 
+
+
+\ 
+
+##Comparison of model predictions with actual results
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+
+### Prepare prediction data
+### Data as of CY 1997
+data.pred<-filter(data.prep, CY<=1997)
+
+
+#### Cumulative models
+pred.norm.cum<-PredReserveCum(model=fit.glm.norm.cum, data=data.pred, lag.max = 9, CY.ini = 1997, label="norm")
+pred.pois.cum<-PredReserveCum(model=fit.glm.pois.cum, data=data.pred, lag.max = 9, CY.ini = 1997, label="pois")
+pred.quasi.pois.cum<-PredReserveCum(model=fit.glm.quasi.pois.cum, data=data.pred, lag.max = 9, CY.ini = 1997, label="quasi.pois")
+pred.gamma.cum<-PredReserveCum(model=fit.glm.gamma.cum, data=data.pred, lag.max = 9, CY.ini = 1997, label="gamma")
+pred.lnorm.cum<-PredReserveCum(model=fit.glm.lnorm.cum, data=data.pred, lag.max = 9, CY.ini = 1997, label="lnorm")
+
+
+#### Incremental models
+pred.norm.inc<-PredReserveInc(model=fit.glm.norm.inc, data=data.pred, lag.max = 9, CY.ini = 1997, label="norm")
+pred.norm.inc.interc<-PredReserveInc(model=fit.glm.norm.inc.interc, data=data.pred, lag.max = 9, CY.ini = 1997, label="norm_interc")
+pred.pois.inc<-PredReserveInc(model=fit.glm.pois.inc, data=data.pred, lag.max = 9, CY.ini = 1997, label="pois")
+pred.quasi.pois.inc<-PredReserveInc(model=fit.glm.quasi.pois.inc, data=data.pred, lag.max = 9, CY.ini = 1997, label="quasi.pois")
+pred.gamma.inc<-PredReserveInc(model=fit.glm.gamma.inc, data=data.pred, lag.max = 9, CY.ini = 1997, label="gamma")
+pred.lnorm.inc<-PredReserveInc(model=fit.glm.lnorm.inc, data=data.pred, lag.max = 9, CY.ini = 1997, label="lnorm")
+
+
+actual.pred<-data.prep %>% arrange(claim.year, lag) %>% group_by_(.dots=c("claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid)) %>% mutate(model="actual")
+
+model.pred<- bind_rows(pred.norm.inc, pred.norm.inc.interc, pred.quasi.pois.inc, pred.quasi.pois.cum, pred.gamma.inc, pred.gamma.cum, pred.lnorm.inc, actual.pred)
+
+model.pred<-model.pred %>% arrange(model, claim.year, lag) %>% group_by_(.dots=c("model","claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid))
+
+### Plot model performance comparison
+plot_ly(data=model.pred, x=~claim.year, y=~LR.paid, color=~model, colors = c("gold","darkgreen","blue"), type="scatter", mode="lines+markers") %>% 
+  config(editable=F, showLink=F, sendData=F)
+
+``` 
+
+
+\ 
+
+It can be observed that the incremental and cumulative models result in the same predicted outcomes. Given that the incremental model allow for more flexible model design,it is that structure that will be employed ongoing. 
+
+- Having an intercept term for the log model result in the same outcome. 
+
+- Adding an intercept term on an additional model structure has an influence on the outcome. 
+
+- Poisson and quasi-Poisson result in the same prediction. However, the underlying modeled variance is different and thus the quasi-Poisson will be preferred since the dispersion if significantly greater than the fixed mean/variation relationship implied by the simple Poisson distribution. 
+
+
+Poisson projected LR
+
+```{r, echo=FALSE}
+
+TriPrep(pred.pois.inc, split = "claim.year",lag = "lag", var="LR.paid", type="percent")
+
+``` 
+
+\ 
+
+Log-normal projected LR
+
+```{r, echo=FALSE}
+
+TriPrep(pred.lnorm.inc, split = "claim.year",lag = "lag", var="LR.paid", type="percent")
+
+``` 
+
+\ 
+
+
+#Incremental paid with trending on accident year
+
+
+```{r, echo=TRUE, warning=FALSE, message=F}
+
+### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit<-filter(data.prep, !is.na(incurred_prev), CY<=1997)
+
+
+fit.glm.quasi.pois<-glm(paid~factor(lag):log(cum.paid_prev) + claim.year, data=data.fit, family=quasipoisson(link = "log"))
+
+fit.glm.lnorm<-glm(log(paid)~factor(lag):log(cum.paid_prev) + claim.year, data=data.fit, family=gaussian(link = "identity"))
+
+fit.glm.norm<-glm(paid~factor(lag):cum.paid_prev + claim.year, data=data.fit, family=gaussian(link = "identity"))
+
+``` 
+
+\ 
+
+##Comparison of model predictions with actual results
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+
+### Prepare prediction data
+### Data as of CY 1997
+data.pred<-filter(data.prep, CY<=1997)
+
+pred.quasi.pois<-PredReserveInc(model=fit.glm.quasi.pois, data=data.pred, lag.max = 9, CY.ini = 1997, label="quasi.pois")
+pred.lnorm<-PredReserveInc(model=fit.glm.lnorm, data=data.pred, lag.max = 9, CY.ini = 1997, label="lnorm")
+pred.norm<-PredReserveInc(model=fit.glm.norm, data=data.pred, lag.max = 9, CY.ini = 1997, label="norm")
+
+
+actual.pred<-data.prep %>% arrange(claim.year, lag) %>% group_by_(.dots=c("claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid)) %>% mutate(model="actual")
+
+model.pred<- bind_rows(pred.quasi.pois, pred.lnorm, pred.norm, actual.pred)
+
+model.pred<-model.pred %>% arrange(model, claim.year, lag) %>% group_by_(.dots=c("model","claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid))
+
+### Plot model performance comparison
+plot_ly(data=model.pred, x=~claim.year, y=~LR.paid, color=~model, colors = c("gold","darkgreen","blue"), type="scatter", mode="lines+markers") %>% 
+  config(editable=F, showLink=F, sendData=F)
+
+
+``` 
+
+\ 
+
+#Incremental paid with trending on calendar year
+
+```{r, echo=TRUE, warning=FALSE, message=F}
+
+### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit<-filter(data.prep, !is.na(incurred_prev), CY<=1997)
+
+fit.glm.quasi.pois<-glm(paid~factor(lag):log(cum.paid_prev) + CY, data=data.fit, family=quasipoisson(link = "log"))
+
+fit.glm.lnorm<-glm(log(paid)~factor(lag):log(cum.paid_prev) + CY, data=data.fit, family=gaussian(link = "identity"))
+
+fit.glm.norm<-glm(paid~factor(lag):cum.paid_prev + CY, data=data.fit, family=gaussian(link = "identity"))
+
+
+``` 
+
+\ 
+
+##Comparison of model predictions with actual results
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+
+### Prepare prediction data
+### Data as of CY 1997
+data.pred<-filter(data.prep, CY<=1997)
+
+
+pred.quasi.pois<-PredReserveInc(model=fit.glm.quasi.pois, data=data.pred, lag.max = 9, CY.ini = 1997, label="quasi.pois")
+pred.lnorm<-PredReserveInc(model=fit.glm.lnorm, data=data.pred, lag.max = 9, CY.ini = 1997, label="lnorm")
+pred.norm<-PredReserveInc(model=fit.glm.norm, data=data.pred, lag.max = 9, CY.ini = 1997, label="norm")
+
+
+actual.pred<-data.prep %>% arrange(claim.year, lag) %>% group_by_(.dots=c("claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid)) %>% mutate(model="actual")
+
+model.pred<- bind_rows(pred.quasi.pois, pred.lnorm, pred.norm, actual.pred)
+
+model.pred<-model.pred %>% arrange(model, claim.year, lag) %>% group_by_(.dots=c("model","claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid))
+
+### Plot model performance comparison
+plot_ly(data=model.pred, x=~claim.year, y=~LR.paid, color=~model, colors = c("gold","darkgreen","blue"), type="scatter", mode="lines+markers") %>% 
+  config(editable=F, showLink=F, sendData=F)
+
+
+``` 
+
+\ 
+
+
+#Incremental paid based on earned premium
+
+Such approach is similar in perspective to Bornhuetter-Ferguson to the extent that the future incremental payments are independent of past payments and assumed to be a fixed percentage of the earned premium. Main difference with B-F is that there's no assumed *a priori* loss ratio, the % of earned premium paid at each lag is derived entirely from the data rather than from external hypothesis. 
+
+
+```{r, echo=TRUE, warning=FALSE, message=F}
+
+### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit<-filter(data.prep, !is.na(incurred_prev), CY<=1997)
+
+fit.glm.quasi.pois<-glm(paid~factor(lag):log(earned.prm.dir), data=data.fit, family=quasipoisson(link = "log"))
+
+fit.glm.gamma<-glm(paid~factor(lag):log(earned.prm.dir), data=data.fit, family=Gamma(link = "log"))
+
+fit.glm.lnorm<-glm(log(paid)~factor(lag):log(earned.prm.dir), data=data.fit, family=gaussian(link = "identity"))
+
+fit.glm.norm<-glm(paid~factor(lag):earned.prm.dir-1, data=data.fit, family=gaussian(link = "identity"))
+
+
+``` 
+
+\ 
+
+##Comparison of model predictions with actual results
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+
+### Prepare prediction data
+### Data as of CY 1997
+data.pred<-filter(data.prep, CY<=1997)
+
+
+pred.quasi.pois<-PredReserveInc(model=fit.glm.quasi.pois, data=data.pred, lag.max = 9, CY.ini = 1997, label="quasi.pois")
+pred.gamma<-PredReserveInc(model=fit.glm.gamma, data=data.pred, lag.max = 9, CY.ini = 1997, label="gamma")
+pred.lnorm<-PredReserveInc(model=fit.glm.lnorm, data=data.pred, lag.max = 9, CY.ini = 1997, label="lnorm")
+pred.norm<-PredReserveInc(model=fit.glm.norm, data=data.pred, lag.max = 9, CY.ini = 1997, label="norm")
+
+
+actual.pred<-data.prep %>% arrange(claim.year, lag) %>% group_by_(.dots=c("claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid)) %>% mutate(model="actual")
+
+model.pred<- bind_rows(pred.quasi.pois, pred.gamma, pred.lnorm, pred.norm, actual.pred)
+
+model.pred<-model.pred %>% arrange(model, claim.year, lag) %>% group_by_(.dots=c("model","claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid))
+
+### Plot model performance comparison
+plot_ly(data=model.pred, x=~claim.year, y=~LR.paid, color=~model, colors = c("gold","darkgreen","blue"), type="scatter", mode="lines+markers") %>% 
+  config(editable=F, showLink=F, sendData=F)
+
+``` 
+
+\ 
+
+
+#Incremental payment based on cumulative paid and earned premium
+
+Adding flexibility by mixing dependency on both cumulative paid and earned premium.
+
+```{r, echo=TRUE, warning=FALSE, message=F}
+
+### prepare modelisation data
+#Keep all data points up to CY 1997 except the development 0 point
+data.fit<-filter(data.prep, !is.na(incurred_prev), CY<=1997)
+
+fit.glm.quasi.pois<-glm(paid~ factor(lag):log(cum.paid_prev) + factor(lag):log(earned.prm.dir), data=data.fit, family=quasipoisson(link = "log"))
+
+fit.glm.gamma<-glm(paid ~ factor(lag):log(cum.paid_prev) + factor(lag):log(earned.prm.dir), data=data.fit, family=Gamma(link = "log"))
+
+fit.glm.lnorm<-glm(log(paid)~ factor(lag):log(cum.paid_prev) + factor(lag):log(earned.prm.dir), data=data.fit, family=gaussian(link = "identity"))
+
+fit.glm.norm<-glm(paid~ factor(lag):cum.paid_prev + factor(lag):earned.prm.dir - 1, data=data.fit, family=gaussian(link = "identity"))
+
+
+``` 
+
+
+\ 
+
+##Comparison of model predictions with actual results
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+
+### Prepare prediction data
+### Data as of CY 1997
+data.pred<-filter(data.prep, CY<=1997)
+
+
+pred.quasi.pois<-PredReserveInc(model=fit.glm.quasi.pois, data=data.pred, lag.max = 9, CY.ini = 1997, label="quasi.pois")
+pred.gamma<-PredReserveInc(model=fit.glm.gamma, data=data.pred, lag.max = 9, CY.ini = 1997, label="gamma")
+pred.lnorm<-PredReserveInc(model=fit.glm.lnorm, data=data.pred, lag.max = 9, CY.ini = 1997, label="lnorm")
+pred.norm<-PredReserveInc(model=fit.glm.norm, data=data.pred, lag.max = 9, CY.ini = 1997, label="norm")
+
+
+actual.pred<-data.prep %>% arrange(claim.year, lag) %>% group_by_(.dots=c("claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid)) %>% mutate(model="actual")
+
+model.pred<- bind_rows(pred.quasi.pois, pred.gamma, pred.lnorm, pred.norm, actual.pred)
+
+model.pred<-model.pred %>% arrange(model, claim.year, lag) %>% group_by_(.dots=c("model","claim.year")) %>% 
+  summarise(cum.paid=last(cum.paid), LR.paid=last(LR.paid))
+
+### Plot model performance comparison
+plot_ly(data=model.pred, x=~claim.year, y=~LR.paid, color=~model, colors = c("gold","darkgreen","blue"), type="scatter", mode="lines+markers") %>% 
+  config(editable=F, showLink=F, sendData=F)
+
+``` 
+

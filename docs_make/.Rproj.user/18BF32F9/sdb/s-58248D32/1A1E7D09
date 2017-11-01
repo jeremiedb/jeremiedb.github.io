@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : ".Rproj.user\n.Rhistory\n.RData\n.Ruserdata\n",
+    "created" : 1509517412286.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "369326322",
+    "id" : "1A1E7D09",
+    "lastKnownWriteTime" : 1509517301,
+    "last_content_update" : 1509517301,
+    "path" : "C:/Data/GitHub/jeremiedb.github.io/.gitignore",
+    "project_path" : null,
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "gitignore"
+}

@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "name: \"actuarial-analytics.ca\"\noutput_dir: \"../docs\"\noutput:\n  html_document:\n    theme: cosmo\n    css: style.css\n    self_contained: false\n    include: \n      in_header: include/in_header.html",
+    "created" : 1509517392179.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3416229430",
+    "id" : "F39B9252",
+    "lastKnownWriteTime" : 1509517402,
+    "last_content_update" : 1509517402744,
+    "path" : "C:/Data/GitHub/jeremiedb.github.io/docs_make/_site.yml",
+    "project_path" : "_site.yml",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "yaml"
+}

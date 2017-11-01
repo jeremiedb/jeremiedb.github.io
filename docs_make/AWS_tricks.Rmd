@@ -1,0 +1,158 @@
+---
+title: "AWS EC2 Ubuntu Cheat Sheet"
+output: 
+  html_document:
+   toc: false
+   self_contained: false
+---
+
+
+#Cheatsheet for AWS Ubuntu server setup
+
+- Start AWS EC2 instance (Linux 16.04 LTS)  
+
+- Register new key if none already exist (when prompted during the EC2 setup)
+
+- Access server through putty (well explained in EC2 connexion console)
+
+    - Install putty: http://www.putty.org/  
+    - Convert Amazon key to putty format  
+        - Open PuTTYgen 
+            - Type of key to generate: SSH-2-RSA
+            - Load the .pem key obtained during EC2 seting up
+            - Save private key (optional to have a passphrase)
+        - In PuTTY
+            - Host Name: ubuntu@public_dns_name  
+            - In Connection > SSH > Auth  
+
+- Proceed to server setting up
+
+- Copy the the required files from local machine to EC2 (RStudio convenient for small files, winSCP otherwise)
+
+- Copy the Website and Shiny Apps in appropirate folders
+
+\ 
+
+##Server setup
+
+If starting a new session, first need to install and setup few utilities
+
+Add a sudo (super user do) account 
+
+    `sudo adduser <user> && sudo adduser <user> sudo`
+
+  1. Get latest packages
+  
+    `sudo nano /etc/apt/sources.list`
+    
+    Add the following line to the file:  
+        `deb https://cran.rstudio.com/bin/linux/ubuntu xenial/`  
+    And save using Ctrl-X
+        
+2. R-base-dev (dev because it apparently makes the installation of packages possible-easier) and Shiny package 
+
+    `sudo apt-get update`  
+    `sudo apt-get install r-base-dev`
+        
+3. Shiny Server
+
+    ```{r eval=F}
+    sudo apt-get install gdebi-core  
+    wget https://download3.rstudio.org/ubuntu-12.04/x86_64/shiny-server-1.4.2.786-amd64.deb  
+    sudo gdebi shiny-server-1.4.2.786-amd64.deb
+    ```
+
+        
+    
+4. RStudio
+    
+    `wget https://download2.rstudio.org/rstudio-server-0.99.896-amd64.deb`  
+    `sudo gdebi rstudio-server-0.99.896-amd64.deb`
+    
+5. Apache Web Server 
+
+    `sudo apt-get install apache2`
+    
+    The website will then need to be copied in the following directory  
+    /var/www/html/index.html
+    
+
+Memomy may be limited and swap space required (http://aws-labs.com/add-swap-ubuntu-14-04/):  
+
+
+```{r eval=F}
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile  
+
+```
+
+For R package installation, some additional Linux packages may be required: 
+
+```{r eval=F}
+sudo apt-get install libcurl4-openssl-dev
+sudo apt-get install libssl-dev
+sudo apt-get install libgeos-dev
+sudo apt-get install libxml2-dev
+sudo apt-get install libgdal-dev
+sudo apt-get install libproj-dev
+```
+
+
+\ 
+
+
+##Upload website from local machine to the AWS Instance
+
+Copy website
+
+`sudo cp -a /home/<user>/Website/. /var/www/html/`
+
+Remove all files within a directory: 
+
+`sudo rm -rf /var/www/html/*`
+
+Remove folder:
+
+`sudo rm -rf /var/www/html/Website`
+
+
+\ 
+
+##Upload a Shiny app
+
+
+Copy the folder containing the application (creating KillerApp)
+
+`sudo cp -ar /home/<user>/KillerApp/ /srv/shiny-server/`
+
+To delete an existing app: 
+
+`sudo rm -rf /srv/shiny-server/WoundedApp`
+
+\ 
+
+##Manipulation with Shiny server
+
+- sudo start shiny-server  
+- sudo stop shiny-server  
+- sudo restart shiny-server  
+
+Configuration
+Shiny Server is mainly configured via the following file: `/etc/shiny-server/shiny-server.conf`
+
+We can use the minimalistic text editor Nano to edit the configuration file. 
+
+`sudo nano /etc/shiny-server/shiny-server.conf`
+
+in Nano, change the port to 80
+Save the file by hitting Ctrl+X and answering Yes
+Restarting the server by typing
+
+Open port 80 in the AWS EC2 Security Group by adding a custom TCP rule for port 80 to make apps available to all. 
+
+\ 
+
+### Git tricks
+

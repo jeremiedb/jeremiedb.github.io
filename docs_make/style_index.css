@@ -1,0 +1,55 @@
+html {
+   margin: 0px;
+   height: 100%;
+   width: 100%;
+}
+
+body {
+   margin: 0px;
+   min-height: 100%;
+   width: 100%;
+}
+
+.wide {
+  width:100%;
+  height:calc(100%);
+  background-image:url('include/birch-dress.jpg');
+  background-size:cover;
+}
+
+.wide img {
+  width:100%;
+}
+
+.logo {
+  color:#fff;
+  font-weight:800;
+  font-size:18pt;
+  padding-top:110px;
+  padding-left:0px;
+  padding-right:0px;
+  text-align:center;
+}
+
+.logo2 {
+  color: black;
+  background-color: white;
+  font-size:22pt;
+  text-align:center;
+  font-family: "courier";
+  font-weight: bolder;
+}
+
+.line {
+  padding-top:105px;
+  white-space:no-wrap;
+  overflow:hidden;
+  text-align:center;
+}
+
+.line2 {
+  padding-top:105px;
+  white-space:no-wrap;
+  overflow:hidden;
+  text-align:center;
+}

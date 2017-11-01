@@ -1,0 +1,6 @@
+---
+output: 
+  html_document: 
+    include: 
+      in_header: index_header.html
+---

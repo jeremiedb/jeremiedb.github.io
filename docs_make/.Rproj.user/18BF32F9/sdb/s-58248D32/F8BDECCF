@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"Useful Data Preperation Functions\"\noutput: \n  html_document:\n   toc: true\n   toc_depth: 2\n   number_section: false\n   self_contained: false\n   highlight: textmate\n---\n\n##Create KNN features\n\nThe function *knn_creator* creates a knn predictor. \n\nIt takes a matrix as argument (preferrably a PCA or other scale controlled matrix). \n\nMatrix is assumes to contain both labeled and non-labelled data (train and holdout). \n\nArgument *train_tot_flag* is a logical vector that identifies the training (labelled) rows. \n\nArgument *target_train_tot* provides the training labels associated with the training rows. \n\n```{r, echo=TRUE, eval=FALSE}\n\nknn_creator<- function(data_tot_matrix, train_tot_flag, target_train_tot, k){\n  \n  knn_train_tot<- FNN::knn.reg(train = data_tot_matrix[train_tot_flag, ], test = data_tot_matrix[train_tot_flag, ], y = target_train_tot, k = k+1)$pred\n  knn_train_tot<- (knn_train_tot*(k+1)-target_train_tot)/k\n  \n  knn_holdout<- FNN::knn.reg(train = data_tot_matrix[train_tot_flag, ], test = data_tot_matrix[!train_tot_flag, ], y = target_train_tot, k = k)$pred\n  return(c(knn_train_tot, knn_holdout))\n}\n\nknn_10<- knn_creator(data_tot_matrix = data_tot_pca[, 1:21], train_tot_flag = train_tot_flag, target_train_tot = target_train_tot, k = 10)\n\n\n```\n\n\n\n##Create interactions\n\nThis function creates a one-hot encoded matrix from the interactions of the provided variables. \n\n```{r, echo=TRUE, eval=FALSE}\ncross_creator<- function(v1, v2, bins){\n  \n  v1_bin<- cut(v1, breaks = quantile(v1, probs = 0:bins/bins), include.lowest = T, labels = F)\n  v2_bin<- cut(v2, breaks = quantile(v2, probs = 0:bins/bins), include.lowest = T, labels = F)\n  \n  var_cross<- paste(v1_bin, v2_bin, sep=\"_\")\n  \n  return(model.matrix(~.-1, data.frame(var_cross)))\n}\n```\n",
+    "created" : 1509517855257.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "753022457",
+    "id" : "F8BDECCF",
+    "lastKnownWriteTime" : 1483429856,
+    "last_content_update" : 1483429856,
+    "path" : "C:/Data/GitHub/jeremiedb.github.io/docs_make/kaggle_functions.Rmd",
+    "project_path" : "kaggle_functions.Rmd",
+    "properties" : {
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

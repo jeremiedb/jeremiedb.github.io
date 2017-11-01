@@ -1,9 +1,0 @@
-name: "actuarial-analytics.ca"
-output_dir: "docs"
-output:
-  html_document:
-    theme: cosmo
-    css: style.css
-    self_contained: false
-    include: 
-      in_header: include/in_header.html
