@@ -343,20 +343,19 @@ git push origin master</code></pre>
 </div>
 <div id="synchronise-fork-with-original-master" class="section level4">
 <h4>Synchronise fork with original master</h4>
-<p>Make sure that you’re on your master branch: <code>git checkout master</code></p>
-</div>
-</div>
-</div>
-<div id="add-the-remote-call-it-upstream" class="section level1">
-<h1>Add the remote, call it “upstream”:</h1>
+<p>Make sure that you’re on your master branch:</p>
+<p><code>git checkout master</code></p>
+<p>Add the remote repository, call it “upstream”:</p>
 <pre><code>git remote add upstream https://github.com/whoever/whatever
 git fetch upstream
 git pull upstream master</code></pre>
 <p>If need to rebase the submodules</p>
 <p><code>git submodule update --init --recursive</code></p>
+</div>
 <div id="create-new-branch" class="section level4">
 <h4>Create new branch</h4>
 <p><code>git checkout -b new-branch existing-branch</code></p>
+</div>
 </div>
 </div>
 

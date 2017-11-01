@@ -61,17 +61,17 @@ body,html {
 .navbar-nav .dropdown-menu li a:hover { 
   color: rgb(255, 255, 255) !important;
 	color: rgba(255, 255, 255, 1) !important;
-  background: rgb(225, 10, 30) !important;
-  background: rgba(225, 10, 30, 0.65) !important;
+	background: rgb(0, 0, 255) !important;
+  background: rgba(0, 0, 255, 1) !important; 
 }
 
 .navbar-nav .navbar-right a:hover {
-  background: rgb(225, 10, 30) !important;
-  background: rgba(225, 10, 30, 0.65) !important;
+  background: rgb(0, 0, 255) !important;
+  background: rgba(0, 0, 255, 1) !important; 
 }
 
 /* font color for links in banner */
-.navbar a:visited {
-  background: rgb(225, 10, 30) !important;
-  background: rgba(225, 10, 30, 0.65) !important;
+.nav a:visited {
+  background: rgb(255, 10, 30) !important;
+  background: rgba(255, 10, 30, 0.65) !important;
 }
