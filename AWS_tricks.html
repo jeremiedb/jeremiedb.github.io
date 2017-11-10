@@ -262,9 +262,9 @@ $(document).ready(function () {
 <div id="server-setup" class="section level3">
 <h3>Server setup</h3>
 <p>If starting a new session, first need to install and setup few utilities</p>
-<p>Add a sudo (super user do) account</p>
-<pre><code>`sudo adduser &lt;user&gt; &amp;&amp; sudo adduser &lt;user&gt; sudo`</code></pre>
 <ol style="list-style-type: decimal">
+<li><p>Add a sudo (super user do) account:</p>
+<p><code>sudo adduser &lt;user&gt; &amp;&amp; sudo adduser &lt;user&gt; sudo</code></p></li>
 <li><p>Get latest packages</p>
 <p><code>sudo nano /etc/apt/sources.list</code></p>
 <p>Add the following line to the file:<br />
@@ -273,13 +273,13 @@ And save using Ctrl-X</p></li>
 <li><p>R-base-dev (dev because it apparently makes the installation of packages possible-easier) and Shiny package</p>
 <p><code>sudo apt-get update</code><br />
 <code>sudo apt-get install r-base-dev</code></p></li>
+<li><p>RStudio</p>
+<p><code>wget https://download2.rstudio.org/rstudio-server-0.99.896-amd64.deb</code><br />
+<code>sudo gdebi rstudio-server-0.99.896-amd64.deb</code></p></li>
 <li><p>Shiny Server</p>
 <pre class="r"><code>sudo apt-get install gdebi-core  
 wget https://download3.rstudio.org/ubuntu-12.04/x86_64/shiny-server-1.4.2.786-amd64.deb  
 sudo gdebi shiny-server-1.4.2.786-amd64.deb</code></pre></li>
-<li><p>RStudio</p>
-<p><code>wget https://download2.rstudio.org/rstudio-server-0.99.896-amd64.deb</code><br />
-<code>sudo gdebi rstudio-server-0.99.896-amd64.deb</code></p></li>
 <li><p>Apache Web Server</p>
 <p><code>sudo apt-get install apache2</code></p>
 <p>The website will then need to be copied in the following directory<br />
@@ -336,7 +336,7 @@ sudo apt-get install libproj-dev</code></pre>
 <h3>Git tricks</h3>
 <div id="commit-all-changes" class="section level4">
 <h4>Commit all changes</h4>
-<pre><code>git add . 
+<pre class="r"><code>git add . 
 git commit -m &quot;shortComment&quot;
 git pull origin master
 git push origin master</code></pre>
@@ -346,7 +346,7 @@ git push origin master</code></pre>
 <p>Make sure that you’re on your master branch:</p>
 <p><code>git checkout master</code></p>
 <p>Add the remote repository, call it “upstream”:</p>
-<pre><code>git remote add upstream https://github.com/whoever/whatever
+<pre class="r"><code>git remote add upstream https://github.com/whoever/whatever
 git fetch upstream
 git pull upstream master</code></pre>
 <p>If need to rebase the submodules</p>
@@ -356,6 +356,13 @@ git pull upstream master</code></pre>
 <h4>Create new branch</h4>
 <p><code>git checkout -b new-branch existing-branch</code></p>
 </div>
+</div>
+<div id="package-installation" class="section level3">
+<h3>Package installation</h3>
+<p>Compiling MXNet with MKL may require to specify static links:</p>
+<pre class="r"><code>sudo ln -s /home/jeremie/mklml/lib/libiomp5.so /lib/libiomp5.so
+sudo ln -s /home/jeremie/mklml/lib/libmklml_gnu.so /lib/libmklml_gnu.so
+sudo ln -s /home/jeremie/mklml/lib/libmklml_intel.so /lib/libmklml_intel.so</code></pre>
 </div>
 </div>
 
