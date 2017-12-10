@@ -20,8 +20,9 @@
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
 <!DOCTYPE html>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 
@@ -32,10 +33,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlightingOnLoad(); }, 0);
+  }
 }
 </script>
 
@@ -284,7 +287,25 @@ sudo gdebi shiny-server-1.4.2.786-amd64.deb</code></pre></li>
 <p><code>sudo apt-get install apache2</code></p>
 <p>The website will then need to be copied in the following directory<br />
 /var/www/html/index.html</p></li>
+<li><p>CUDA</p></li>
 </ol>
+<p>Follow installation instructions at:</p>
+<p><code>https://developer.nvidia.com/cuda-downloads?target_os=Linux&amp;target_arch=x86_64&amp;target_distro=Ubuntu&amp;target_version=1604&amp;target_type=debnetwork</code></p>
+<p><code>http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.0.176-1_amd64.deb</code> <code>sudo dpkg -i cuda-repo-ubuntu1604_9.0.176-1_amd64.deb</code> <code>sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub</code> <code>sudo apt-get update</code> <code>sudo apt-get install cuda</code></p>
+<ol start="8" style="list-style-type: decimal">
+<li>Cudnn</li>
+</ol>
+<p><code>https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v7.0.4/prod/9.0_20171031/Ubuntu16_04-x64/libcudnn7_7.0.4.31-1+cuda9.0_amd64</code></p>
+<p>After download of the .deb (need login to nviddia dev account) sudo dpkg -i libcudnn7_7.0.3.11-1+cuda9.0_amd64.deb</p>
+<ol start="9" style="list-style-type: decimal">
+<li>MXNET</li>
+</ol>
+<p>sudo apt-get install libjemalloc-dev sudo apt-get install google-perftools</p>
+<p>make -j $(nproc) USE_OPENCV=1 USE_BLAS=openblas USE_CUDA=1 USE_CUDA_PATH=/usr/local/cuda USE_CUDNN=1 USE_MKL2017=1 USE_MKL2017_EXPERIMENTAL=1</p>
+<p>Compiling MXNet with MKL may require to specify static links prior installing R package:</p>
+<pre class="r"><code>sudo ln -s /home/user/mklml/lib/libiomp5.so /lib/libiomp5.so
+sudo ln -s /home/user/mklml/lib/libmklml_gnu.so /lib/libmklml_gnu.so
+sudo ln -s /home/user/mklml/lib/libmklml_intel.so /lib/libmklml_intel.so</code></pre>
 <p>Memory may be limited and swap space required (<a href="http://aws-labs.com/add-swap-ubuntu-14-04/" class="uri">http://aws-labs.com/add-swap-ubuntu-14-04/</a>):</p>
 <pre class="r"><code>sudo fallocate -l 4G /swapfile
 sudo chmod 600 /swapfile
@@ -296,7 +317,8 @@ sudo apt-get install libssl-dev
 sudo apt-get install libgeos-dev
 sudo apt-get install libxml2-dev
 sudo apt-get install libgdal-dev
-sudo apt-get install libproj-dev</code></pre>
+sudo apt-get install libproj-dev
+sudo apt-get install libfftw3-dev</code></pre>
 <p> </p>
 </div>
 <div id="upload-website-from-local-machine-to-the-aws-instance" class="section level2">
@@ -357,13 +379,13 @@ git pull upstream master</code></pre>
 <p><code>git checkout -b new-branch existing-branch</code></p>
 </div>
 </div>
-<div id="package-installation" class="section level3">
-<h3>Package installation</h3>
-<p>Compiling MXNet with MKL may require to specify static links:</p>
-<pre class="r"><code>sudo ln -s /home/jeremie/mklml/lib/libiomp5.so /lib/libiomp5.so
-sudo ln -s /home/jeremie/mklml/lib/libmklml_gnu.so /lib/libmklml_gnu.so
-sudo ln -s /home/jeremie/mklml/lib/libmklml_intel.so /lib/libmklml_intel.so</code></pre>
 </div>
+<div id="docker-images" class="section level2">
+<h2>Docker images</h2>
+<p>Start an interactive image (-it rather than -i):</p>
+<p>‘docker run -it -p 8888:8888 -v //c/Users/UserName/Documents/Docker:/Docker fullkit bash’</p>
+<p>To start jupyter:</p>
+<p>jupyter-notebook –ip 0.0.0.0 –no-browser –allow-root</p>
 </div>
 
 
